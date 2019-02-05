@@ -243,6 +243,11 @@
  * M407 - Display measured filament diameter
  * M408 - Report JSON-style response
  * M410 - Quickstop. Abort all the planned moves
+ * M412 - Filament Runout Sensor. (Requires FILAMENT_RUNOUT_SENSOR)
+            S[bool]   Enable / Disable Sensor control
+            H[bool]   Enable / Disable Host control
+            R[bool]   Reset control
+            D[float]  Distance mm
  * M413 - S[bool] Enable / Disable Restart Job. (Requires SD_RESTART_FILE)
  * M420 - Enable/Disable Leveling (with current values) S1=enable S0=disable (Requires MBL, UBL or ABL)
  *        Z[height] for leveling fade height (Requires ENABLE_LEVELING_FADE_HEIGHT)
@@ -256,7 +261,6 @@
  * M501 - Read parameters from EEPROM (if you need reset them after you changed them temporarily).
  * M502 - Revert to the default "factory settings". You still need to store them in EEPROM afterwards if you want to.
  * M503 - Print the current settings (from memory not from EEPROM). Use S0 to leave off headings.
- * M512 - Print Extruder Encoder status Pin. (Requires Extruder Encoder)
  * M522 - Read or Write on card. M522 T[extruders] R[read] or W[write] L[list]
  * M524 - Abort the current SD print job (started with M24). (Requires SDSUPPORT)
  * M530 - Enables explicit printing mode (S1) or disables it (S0). L can set layer count
@@ -268,7 +272,6 @@
  * M600 - Pause for filament change T[toolhead] X[pos] Y[pos] Z[relative lift]
  *        E[initial retract] U[Retract distance] L[Extrude distance] S[new temp] B[Number of beep]
  * M603 - Set filament change T[toolhead] U[Retract distance] L[Extrude distance]
- * M604 - Set data Extruder Encoder S[Error steps] (requires EXTRUDER ENCODER)
  * M605 - Set dual x-carriage movement mode: S[mode] [ X[duplication x-offset] R[duplication temp offset] ]
  * M649 - Set laser options. S[intensity] L[duration] P[ppm] B[set mode] R[raster mm per pulse] F[feedrate]
  * M666 - Delta geometry adjustment

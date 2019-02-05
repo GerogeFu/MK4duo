@@ -54,12 +54,10 @@ inline void gcode_M530(void) {
         commands.enqueue_and_echo_P(PSTR(START_PRINTING_SCRIPT));
       #endif
 
-      printer.setFilamentOut(false);
-
-      #if HAS_FIL_RUNOUT_0
-        SERIAL_EM("Filament runout activated.");
+      #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+        if (filamentrunout.isEnabled())
+          SERIAL_EM("Filament runout activated.");
       #endif
-
     }
     else {
       print_job_counter.stop();   // Stop the timer job
@@ -68,13 +66,12 @@ inline void gcode_M530(void) {
       #if ENABLED(STOP_GCODE)
         commands.enqueue_and_echo_P(PSTR(STOP_PRINTING_SCRIPT));
       #endif
-
-      printer.setFilamentOut(false);
-
-      #if HAS_FIL_RUNOUT_0
-        SERIAL_EM("Filament runout deactivated.");
-      #endif
     }
+
+    #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+      filamentrunout.setFilamentOut(false);
+    #endif
+
   }
 
 }

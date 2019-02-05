@@ -63,8 +63,7 @@ enum PrinterModeEnum : uint8_t {
 };
 enum InterruptEventEnum : uint8_t {
   INTERRUPT_EVENT_NONE,
-  INTERRUPT_EVENT_FIL_RUNOUT,
-  INTERRUPT_EVENT_ENC_DETECT
+  INTERRUPT_EVENT_FIL_RUNOUT
 };
 
 /**
@@ -83,7 +82,7 @@ enum BusyStateEnum : uint8_t {
 
 /**
  * Emergency Parser
- *  Currently looking for: M108, M112, M410
+ *  Currently looking for: M108, M112, M410, M876
  */
 enum EmergencyStateEnum : uint8_t {
   EP_RESET,
@@ -97,7 +96,25 @@ enum EmergencyStateEnum : uint8_t {
   EP_M4,
   EP_M41,
   EP_M410,
+  EP_M8,
+  EP_M87,
+  EP_M876,
+  EP_M876S,
+  EP_M876SN,
   EP_IGNORE // to '\n'
+};
+
+/**
+ * Prompt Reason
+ *  For M876 command
+ */
+enum HostPromptEnum : char {
+  PROMPT_NOT_DEFINED,
+  PROMPT_FILAMENT_RUNOUT,
+  PROMPT_FILAMENT_RUNOUT_CONTINUE,
+  PROMPT_FILAMENT_RUNOUT_REHEAT,
+  PROMPT_PAUSE_RESUME,
+  PROMPT_INFO
 };
 
 /**

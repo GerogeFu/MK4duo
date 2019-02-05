@@ -26,34 +26,15 @@
  * Copyright (C) 2017 Alberto Cotronei @MagoKimbra
  */
 
-#if HAS_EXT_ENCODER
+#if DISABLED(EMERGENCY_PARSER)
 
-  #define CODE_M512
+  #define CODE_M876
 
   /**
-   * M512: Print Extruder Encoder status Pin
+   * M876: Host Prompt Response
    */
-  inline void gcode_M512(void) {
-
-    #if HAS_E0_ENC
-      SERIAL_EMV("Enc0 signal:", (int16_t)READ_ENCODER(E0_ENC_PIN));
-    #endif
-    #if HAS_E1_ENC
-      SERIAL_EMV("Enc1 signal:", (int16_t)READ_ENCODER(E1_ENC_PIN));
-    #endif
-    #if HAS_E2_ENC
-      SERIAL_EMV("Enc2 signal:", (int16_t)READ_ENCODER(E2_ENC_PIN));
-    #endif
-    #if HAS_E3_ENC
-      SERIAL_EMV("Enc3 signal:", (int16_t)READ_ENCODER(E3_ENC_PIN));
-    #endif
-    #if HAS_E4_ENC
-      SERIAL_EMV("Enc4 signal:", (int16_t)READ_ENCODER(E4_ENC_PIN));
-    #endif
-    #if HAS_E5_ENC
-      SERIAL_EMV("Enc5 signal:", (int16_t)READ_ENCODER(E5_ENC_PIN));
-    #endif
-
+  inline void gcode_M876(void) {
+    if (parser.seenval('S')) host_action.response_handler(parser.value_byte());
   }
 
 #endif

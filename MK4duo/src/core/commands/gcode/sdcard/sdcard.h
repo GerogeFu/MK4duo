@@ -94,9 +94,9 @@
     if (card.isFileOpen()) {
       card.startFileprint();
       print_job_counter.start();
+      host_action.prompt_open(PROMPT_INFO, PSTR("Resume SD"));
+      host_action.resume();
     }
-
-    SERIAL_L(REQUESTCONTINUE);
 
     lcdui.reset_status();
 
@@ -117,7 +117,8 @@
     #else
       print_job_counter.pause();
       lcdui.reset_status();
-      SERIAL_L(REQUESTPAUSE);
+      host_action.prompt_open(PROMPT_PAUSE_RESUME, PSTR("Pause SD"), PSTR("Resume"));
+      host_action.pause();
     #endif
   }
 

@@ -17,14 +17,34 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
  */
+#pragma once
 
 /**
- * Configuration_Overall.h
- * Here you can define all your custom settings and they will overwrite configurations in the main configuration files.
+ * Saved variable and restore
  */
+template<typename T>
+class restorer {
 
-/*******************************
- *   Firmware Version V4.3.9   *
- *******************************/
+  public: /** Constructor */
 
+    restorer(T& perm) : ref_(perm), val_(perm) {}
+
+  public: /** Destructor */
+
+    ~restorer() { restore(); }
+
+  public: /** Public Parameters */
+
+    T& ref_;
+    T  val_;
+
+  public: /** Public Function */
+
+    inline void restore() { ref_ = val_; }
+
+};
+
+#define REMEMBER(X) restorer<typeof(X)> X##_restorer(X)
+#define RESTORE(X) X##_restorer.restore()

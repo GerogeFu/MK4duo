@@ -142,6 +142,7 @@
 #include "host/m530.h"                    // Enables explicit printing mode
 #include "host/m531.h"                    // Define filename being printed
 #include "host/m532_m73.h"                // Update current print state progress
+#include "host/m876.h"                    // Host Prompt Response
 
 // LCD Commands
 #include "lcd/m0_m1.h"
@@ -206,8 +207,7 @@
 // Sensor Commands
 #include "sensor/m70.h"
 #include "sensor/m404_m407.h"             // Filament Sensor
-#include "sensor/m512.h"                  // Extruder Encoder read pin
-#include "sensor/m602_m604.h"             // Extruder Encoder settings (M602 still TODO)
+#include "sensor/m412.h"                  // Filament Runout Sensor
 
 // Stats Commands
 #include "stats/m31.h"

@@ -74,7 +74,7 @@ void Commands::advance_queue() {
 
     if (card.isSaving()) {
       gcode_t command = buffer_ring.peek();
-      if (strstr_P(command.gcode, PSTR("M29"))) {
+      if (is_M29(command.gcode)) {
         // M29 closes the file
         card.finishWrite();
 
@@ -422,7 +422,8 @@ void Commands::get_serial() {
           gcode_LastN = gcode_N;
         }
         #if HAS_SD_SUPPORT
-          else if (card.isSaving() && strcmp(command, "M29") != 0) { // No line number with M29 in Pronterface
+          // Pronterface "M29" and "M29 " has no line number
+          else if (card.isSaving() && !is_M29(command)) {
             gcode_line_error(PSTR(MSG_ERR_NO_CHECKSUM), i);
             return;
           }
@@ -618,6 +619,7 @@ void Commands::gcode_line_error(PGM_P err, const int8_t port) {
   SERIAL_STR(ER);
   SERIAL_PGM(err);
   SERIAL_EV(gcode_LastN);
+  while (Com::serialRead(port) != -1);
   flush_and_request_resend();
   serial_count[port] = 0;
   SERIAL_PORT(-1);
@@ -632,7 +634,6 @@ bool Commands::enqueue(const char * cmd, bool say_ok/*=false*/, int8_t port/*=-2
   buffer_ring.enqueue(temp_cmd);
   return true;
 }
-
 
 bool Commands::drain_injected_P() {
   if (injected_commands_P != NULL) {

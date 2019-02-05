@@ -35,6 +35,8 @@ class EmergencyParser {
 
     static bool killed_by_M112;
 
+    static uint8_t M876_response;
+
   private: /** Private Parameters */
 
     static bool enabled;

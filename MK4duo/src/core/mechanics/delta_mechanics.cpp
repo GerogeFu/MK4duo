@@ -234,7 +234,8 @@ void Delta_Mechanics::get_cartesian_from_steppers() {
  *  The final current_position may not be the one that was requested
  */
 void Delta_Mechanics::do_blocking_move_to(const float rx, const float ry, const float rz, const float &fr_mm_s /*=0.0*/) {
-  const float old_feedrate_mm_s = feedrate_mm_s;
+
+  REMEMBER(feedrate_mm_s);
 
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) Com::print_xyz(PSTR(">>> do_blocking_move_to"), NULL, rx, ry, rz);
@@ -294,7 +295,7 @@ void Delta_Mechanics::do_blocking_move_to(const float rx, const float ry, const 
     #endif
   }
 
-  feedrate_mm_s = old_feedrate_mm_s;
+  RESTORE(feedrate_mm_s);
 
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) SERIAL_EM("<<< do_blocking_move_to");
@@ -481,12 +482,8 @@ void Delta_Mechanics::home(const bool report_position/*=true*/) {
   endstops.setEnabled(true); // Enable endstops for next homing move
 
   bool come_back = parser.boolval('B');
-  float lastpos[NUM_AXIS];
-  float old_feedrate_mm_s;
-  if (come_back) {
-    old_feedrate_mm_s = feedrate_mm_s;
-    COPY_ARRAY(lastpos, current_position);
-  }
+  REMEMBER(feedrate_mm_s);
+  COPY_ARRAY(stored_position[1], current_position);
 
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) DEBUG_POS(">>> home", current_position);
@@ -546,9 +543,9 @@ void Delta_Mechanics::home(const bool report_position/*=true*/) {
 
   if (come_back) {
     feedrate_mm_s = homing_feedrate_mm_s[X_AXIS];
-    COPY_ARRAY(destination, lastpos);
+    COPY_ARRAY(destination, stored_position[1]);
     prepare_move_to_destination();
-    feedrate_mm_s = old_feedrate_mm_s;
+    RESTORE(feedrate_mm_s);
   }
 
   #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)

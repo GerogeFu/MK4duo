@@ -412,10 +412,6 @@ class Stepper {
       static void microstep_init();
     #endif
 
-    #if HAS_EXT_ENCODER
-      static void test_extruder_encoder();
-    #endif
-
     #if HAS_STEPPER_RESET
       /**
        * Stepper Reset (RigidBoard, et.al.)

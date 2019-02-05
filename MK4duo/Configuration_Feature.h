@@ -69,7 +69,6 @@
  * - XY Frequency limit
  * - Skeinforge arc fix
  * SENSORS FEATURES:
- * - Extruder Encoder Control
  * - Filament diameter sensor
  * - Filament Runout sensor
  * - Power consumption sensor
@@ -918,34 +917,6 @@
 //============================= SENSORS FEATURES ============================
 //===========================================================================
 
-
-/**********************************************************************************
- *************************** Extruder Encoder Control *****************************
- **********************************************************************************
- *                                                                                *
- * Support for Encoder on extruder for control filament movement                  *
- * EXPERIMENTAL Function                                                          *
- *                                                                                *
- * You can compare filament moves with extruder moves to detect if the extruder   *
- * is jamming, the spool is knotted or if you are running out of filament.        *
- * You need a movement tracker, that changes a digital signal every x extrusion   *
- * steps.                                                                         *
- *                                                                                *
- * Please define/ Encoder pin for any extruder in configuration pins.              *
- *                                                                                *
- **********************************************************************************/
-//#define EXTRUDER_ENCODER_CONTROL
-
-// Enc error step is step for error detect
-#define ENC_ERROR_STEPS     500
-// Enc min step It must be the minimum number of steps that the extruder does
-// to get a signal from the encoder
-#define ENC_MIN_STEPS        10
-// For invert read signal
-//#define INVERTED_ENCODER_PINS
-/**********************************************************************************/
-
-
 /**********************************************************************************
  *************************** Filament diameter sensor *****************************
  **********************************************************************************
@@ -987,13 +958,25 @@
  * define FILAMENT RUNOUT DAV SYSTEM                                              *
  * Put DAV_PIN for encoder input in Configuration_Pins.h                          *
  *                                                                                *
+ * Support for Encoder on extruder for control filament movement                  *
+ *                                                                                *
+ * You can compare filament moves with extruder moves to detect if the extruder   *
+ * is jamming, the spool is knotted or if you are running out of filament.        *
+ * You need a movement tracker, that changes a digital signal every x extrusion   *
+ * steps.                                                                         *
+ *                                                                                *
  * You also need to set FIL RUNOUT PIN in Configuration_pins.h                    *
  *                                                                                *
  **********************************************************************************/
 //#define FILAMENT_RUNOUT_SENSOR
 
-// DAV system ancoder filament runout
+// DAV system ancoder filament runout only one system
 //#define FILAMENT_RUNOUT_DAV_SYSTEM
+
+// Enable this option to use an encoder disc that toggles the runout pin
+// as the filament moves. (Be sure to set FILAMENT_RUNOUT_DISTANCE_MM
+// large enough to avoid false positives.)
+//#define EXTRUDER_ENCODER_CONTROL
 
 // Set true or false should assigned
 #define FIL_RUNOUT_0_LOGIC false
@@ -1011,8 +994,11 @@
 #define FIL_RUNOUT_4_PULLUP false
 #define FIL_RUNOUT_5_PULLUP false
 
-// Time for double check switch in millisecond. Set 0 for disabled
-#define FILAMENT_RUNOUT_DOUBLE_CHECK 0
+// After a runout is detected, continue printing this length of filament
+// before executing the runout script. Useful for a sensor at the end of
+// a feed tube. Requires 4 bytes SRAM per sensor, plus 4 bytes overhead.
+// 0 disabled
+#define FILAMENT_RUNOUT_DISTANCE_MM 0
 
 // Script execute when filament run out
 #define FILAMENT_RUNOUT_SCRIPT "M600"

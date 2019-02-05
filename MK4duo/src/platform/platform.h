@@ -31,6 +31,7 @@
 
 #include "common/memory_store.h"
 #include "common/communication.h"
+#include "common/host_action.h"
 #include "common/servo.h"
 #include "common/softpwm.h"
 

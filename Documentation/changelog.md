@@ -1,3 +1,8 @@
+### Version 4.3.9
+* Add Prompt support for host
+* Rewrite filament runout
+* Fix and clear code
+
 ### Version 4.3.8
 * Add TMC settings to menu LCD
 * Add Adaptive Fan speed

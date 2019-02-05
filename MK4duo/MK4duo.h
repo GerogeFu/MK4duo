@@ -60,6 +60,7 @@
 #include "src/lib/types.h"
 #include "src/lib/macros.h"
 #include "src/lib/enum.h"
+#include "src/lib/restorer.h"
 #include "src/lib/circular_queue.h"
 #include "src/lib/driver_types.h"
 #include "src/lib/watch.h"

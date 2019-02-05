@@ -71,13 +71,9 @@ bool AdvancedPause::pause_print(const float &retract, const point_t &park_point,
 
   if (did_pause_print) return false; // already paused
 
-  SERIAL_L(ACTIONPAUSE);
+  host_action.paused();
 
-  #if HAS_LCD_MENU
-    if (show_lcd) lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_INIT, ADVANCED_PAUSE_MODE_PAUSE_PRINT);
-  #else
-    UNUSED(show_lcd);
-  #endif
+  host_action.prompt_open(PROMPT_INFO, PSTR("Pause"));
 
   if (!printer.debugDryrun() && unload_length && thermalManager.tooColdToExtrude(ACTIVE_HOTEND)) {
     SERIAL_LM(ER, MSG_HOTEND_TOO_COLD);
@@ -87,6 +83,8 @@ bool AdvancedPause::pause_print(const float &retract, const point_t &park_point,
         lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_STATUS);
         LCD_MESSAGEPGM(MSG_HOTEND_TOO_COLD);
       }
+    #else
+      UNUSED(show_lcd);
     #endif
 
     return false; // unable to reach safe temperature
@@ -113,7 +111,7 @@ bool AdvancedPause::pause_print(const float &retract, const point_t &park_point,
 
   // Initial retract before move to filament change position
   if (retract && !thermalManager.tooColdToExtrude(ACTIVE_HOTEND))
-    do_pause_e_move(-retract, PAUSE_PARK_RETRACT_FEEDRATE);
+    do_pause_e_move(retract, PAUSE_PARK_RETRACT_FEEDRATE);
 
   // Park the nozzle by moving up by z_lift and then moving to (x_pos, y_pos)
   Nozzle::park(2, park_point);
@@ -196,6 +194,8 @@ void AdvancedPause::wait_for_confirmation(const bool is_reload/*=false*/, const 
       SERIAL_STR(ECHO);
       SERIAL_EM(_PMSG(MSG_FILAMENT_CHANGE_HEAT));
 
+      host_action.prompt_do(PROMPT_FILAMENT_RUNOUT_REHEAT, PSTR("HeaterTimeout"), PSTR("Reheat"));
+
       // Wait for LCD click or M108
       while (printer.isWaitForUser()) {
 
@@ -212,7 +212,9 @@ void AdvancedPause::wait_for_confirmation(const bool is_reload/*=false*/, const 
 
         printer.idle(true);
       }
-      
+
+      host_action.prompt_do(PROMPT_FILAMENT_RUNOUT_REHEAT, PSTR("Reheating"));
+
       // Re-enable the bed if they timed out
       #if HAS_TEMP_BED && PAUSE_PARK_PRINTER_OFF > 0
         if (bed_timed_out)
@@ -321,7 +323,9 @@ void AdvancedPause::resume_print(const float &slow_load_length/*=0*/, const floa
   // Set extruder to saved position
   planner.set_e_position_mm(mechanics.destination[E_AXIS] = mechanics.current_position[E_AXIS] = mechanics.stored_position[1][E_AXIS]);
 
-  printer.setFilamentOut(false);
+  #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+    filamentrunout.setFilamentOut(false);
+  #endif
 
   #if HAS_LCD_MENU
     lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_STATUS);
@@ -331,9 +335,11 @@ void AdvancedPause::resume_print(const float &slow_load_length/*=0*/, const floa
     mechanics.Nextion_gfx_clear();
   #endif
 
-  SERIAL_L(ACTIONRESUME);
+  host_action.resumed();
 
   --did_pause_print;
+
+  //host_action.prompt_open(PROMPT_INFO, PSTR("Resume"));
 
   #if HAS_SD_SUPPORT
     if (did_pause_print) {
@@ -444,11 +450,9 @@ bool AdvancedPause::load_filament(const float &slow_load_length/*=0*/, const flo
     #endif
 
     // Keep looping if "Purge More" was selected
-  } while (
+  } while (false
     #if HAS_LCD
-      show_lcd && menu_response == ADVANCED_PAUSE_RESPONSE_EXTRUDE_MORE
-    #else
-      0
+      && show_lcd && menu_response == ADVANCED_PAUSE_RESPONSE_EXTRUDE_MORE
     #endif
   );
 
@@ -505,11 +509,27 @@ bool AdvancedPause::unload_filament(const float &unload_length, const bool show_
 
 /** Private Function */
 void AdvancedPause::show_continue_prompt(const bool is_reload) {
-  #if HAS_LCD
+  #if HAS_LCD_MENU
     lcd_advanced_pause_show_message(is_reload ? ADVANCED_PAUSE_MESSAGE_INSERT : ADVANCED_PAUSE_MESSAGE_WAITING);
   #endif
   SERIAL_STR(ECHO);
   SERIAL_PGM(is_reload ? PSTR(_PMSG(MSG_FILAMENT_CHANGE_INSERT) "\n") : PSTR(_PMSG(MSG_FILAMENT_CHANGE_WAIT) "\n"));
+
+  host_action.prompt_reason = PROMPT_FILAMENT_RUNOUT_CONTINUE;
+  host_action.prompt_begin(PSTR("Paused"));
+  host_action.prompt_button(PSTR("PurgeMore"));
+
+  if (false
+    #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+      || filamentrunout.isFilamentOut()
+    #endif
+  )
+    host_action.prompt_button(PSTR("DisableRunout"));
+  else {
+    host_action.prompt_reason = PROMPT_FILAMENT_RUNOUT;
+    host_action.prompt_button(PSTR("Continue"));
+  }
+  host_action.prompt_show();
 }
 
 /**

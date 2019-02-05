@@ -26,27 +26,40 @@
  * Copyright (C) 2017 Alberto Cotronei @MagoKimbra
  */
 
-#if EXTRUDERS > 0 && HAS_EXT_ENCODER
+#if EXTRUDERS > 0 && ENABLED(FILAMENT_RUNOUT_SENSOR)
 
-  //#define CODE_M602
-  #define CODE_M604
-
-  /**
-   * M602: Enable or disable Extruder Encoder
-   */
+  #define CODE_M412
 
   /**
-   * M604: Set data Extruder Encoder
-   *
-   *  S[step] - Set Error Steps
+   * M412: Enable or disable Filament Runout detection
+   *  S[bool]   Enable / Disable Sensor control
+   *  H[bool]   Enable / Disable Host control
+   *  R[bool]   Reset control
+   *  D[float]  Distance mm
    *
    */
-  inline void gcode_M604(void) {
+  inline void gcode_M412(void) {
 
-    if (commands.get_target_tool(604)) return;
+    #if DISABLED(DISABLE_M503)
+      // No arguments? Show M412 report.
+      if (!parser.seen("DHRS")) {
+        SERIAL_STR(ECHO);
+        SERIAL_EONOFF("Filament runout", filamentrunout.isEnabled());
+        return;
+      }
+    #endif
 
-    tools.encErrorSteps[tools.target_extruder] = parser.intval('S', ENC_ERROR_STEPS);
-    SERIAL_EMV("Encoder Error Steps: ", tools.encErrorSteps[TARGET_EXTRUDER]);
+    const bool  seenR = parser.seen('R'),
+                seenS = parser.seen('S');
+
+    if (seenR || seenS) filamentrunout.reset();
+    if (seenS) filamentrunout.setEnabled(parser.value_bool());
+    if (parser.seen('H')) filamentrunout.setHostHandling(parser.value_bool());
+
+    #if FILAMENT_RUNOUT_DISTANCE_MM > 0
+      if (parser.seen('D')) filamentrunout.response.runout_distance_mm = parser.value_float();
+    #endif
+
   }
 
 #endif // EXTRUDERS > 0 && HAS_EXT_ENCODER

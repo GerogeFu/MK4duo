@@ -231,6 +231,13 @@ class Commands {
      */
     static void process_parsed(const bool say_ok=true);
 
+    /**
+     * Search M29 command
+     */
+    FORCE_INLINE static bool is_M29(const char * const cmd) {
+      return cmd[0] == 'M' && cmd[1] == '2' && cmd[2] == '9' && !WITHIN(cmd[3], '0', '9');
+    }
+
 };
 
 extern Commands commands;

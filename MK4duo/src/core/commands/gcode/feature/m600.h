@@ -86,11 +86,11 @@
     #endif
 
     // Initial retract before move to pause park position
-    const float retract = ABS(parser.seen('E') ? parser.value_axis_units(E_AXIS) : 0)
+    const float retract = -ABS(parser.seen('E') ? parser.value_axis_units(E_AXIS) : 0
       #if ENABLED(PAUSE_PARK_RETRACT_LENGTH) && PAUSE_PARK_RETRACT_LENGTH > 0
         + (PAUSE_PARK_RETRACT_LENGTH)
       #endif
-    ;
+    );
 
     // Lift Z axis
     if (parser.seenval('Z')) park_point.z = parser.linearval('Z');

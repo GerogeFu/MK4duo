@@ -1205,12 +1205,12 @@ void LcdUI::pause_print() {
   #endif
 
   #if ENABLED(PARK_HEAD_ON_PAUSE)
-    lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_INIT, ADVANCED_PAUSE_MODE_PAUSE_PRINT, tools.active_extruder);
-    commands.enqueue_and_echo_P(PSTR("M25 P"));
+    lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_INIT, ADVANCED_PAUSE_MODE_PAUSE_PRINT);  // Show message immediately to let user know about pause in progress
+    commands.enqueue_and_echo_P(PSTR("M25 P\nM24"));
   #elif HAS_SD_SUPPORT
     commands.enqueue_and_echo_P(PSTR("M25"));
   #else
-    SERIAL_L(REQUESTPAUSE);
+    host_action.pause();
   #endif
 
   planner.synchronize();
@@ -1221,7 +1221,7 @@ void LcdUI::resume_print() {
   #if HAS_SD_SUPPORT
     commands.enqueue_and_echo_P(PSTR("M24"));
   #else
-    SERIAL_L(REQUESTCONTINUE);
+    host_action.resume();
   #endif
 }
 
@@ -1230,10 +1230,13 @@ void LcdUI::stop_print() {
     printer.setWaitForHeatUp(false);
     printer.setWaitForUser(false);
     if (IS_SD_PRINTING()) card.setAbortSDprinting(true);
+    else
   #endif
-  SERIAL_L(REQUESTSTOP);
+      host_action.cancel();
+
   set_status_P(PSTR(MSG_PRINT_ABORTED), -1);
   return_to_status();
+
 }
 
 #endif // HAS_SPI_LCD

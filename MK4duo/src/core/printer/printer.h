@@ -54,9 +54,9 @@ union flagVarious_t {
     bool  AllowColdExtrude  : 1;
     bool  AutoreportTemp    : 1;
     bool  SuspendAutoreport : 1;
-    bool  FilamentOut       : 1;
     bool  G38Move           : 1;
     bool  statistics_loaded : 1;
+    bool  bit11             : 1;
     bool  bit12             : 1;
     bool  bit13             : 1;
     bool  bit14             : 1;
@@ -230,15 +230,11 @@ class Printer {
     FORCE_INLINE static void setSuspendAutoreport(const bool onoff) { various_flag.SuspendAutoreport = onoff; }
     FORCE_INLINE static bool isSuspendAutoreport() { return various_flag.SuspendAutoreport; }
 
-    // Various flag bit 9 FilamentOut
-    FORCE_INLINE static void setFilamentOut(const bool onoff) { various_flag.FilamentOut = onoff; }
-    FORCE_INLINE static bool isFilamentOut() { return various_flag.FilamentOut; }
-
-    // Various flag bit 10 G38Move
+    // Various flag bit 9 G38Move
     FORCE_INLINE static void setG38Move(const bool onoff) { various_flag.G38Move = onoff; }
     FORCE_INLINE static bool IsG38Move() { return various_flag.G38Move; }
 
-    // Various flag bit 11 Statistics loaded
+    // Various flag bit 10 Statistics loaded
     FORCE_INLINE static void setStatisticsLoaded(const bool onoff) { various_flag.statistics_loaded = onoff; }
     FORCE_INLINE static bool IsStatisticsLoaded() { return various_flag.statistics_loaded; }
 

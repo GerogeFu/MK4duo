@@ -462,7 +462,7 @@ void Printer::kill(PGM_P const lcd_msg/*=NULL*/) {
     UNUSED(lcd_msg);
   #endif
 
-  SERIAL_L(ACTIONPOWEROFF);
+  host_action.power_off();
 
   minikill();
 }
@@ -850,36 +850,30 @@ void Printer::handle_interrupt_events() {
 
   if (interruptEvent == INTERRUPT_EVENT_NONE) return; // Exit if none Event
 
-  const InterruptEventEnum event = interruptEvent;
+  switch(interruptEvent) {
+    #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+      case INTERRUPT_EVENT_FIL_RUNOUT:
+        filamentrunout.setFilamentOut(true);
+        host_action.prompt_reason = PROMPT_FILAMENT_RUNOUT_TRIPPED;
+        host_action.prompt_begin(PSTR("Filament Runout T"), false);
+        SERIAL_EV(int(tools.active_extruder));
+        host_action.prompt_show();
+
+        if (filamentrunout.isHostHandling()
+          host_action.paused();
+        else
+          commands.enqueue_and_echo_P(PSTR(FILAMENT_RUNOUT_SCRIPT));
+
+        planner.synchronize();
+        break;
+    #endif
+
+    default: break;
+
+  }
+
   interruptEvent = INTERRUPT_EVENT_NONE;
 
-  switch(event) {
-    #if HAS_FIL_RUNOUT_0
-      case INTERRUPT_EVENT_FIL_RUNOUT:
-        if (!isFilamentOut() && isPrinting()) {
-          setFilamentOut(true);
-          commands.enqueue_and_echo_P(PSTR(FILAMENT_RUNOUT_SCRIPT));
-          planner.synchronize();
-        }
-        break;
-    #endif
-
-    #if HAS_EXT_ENCODER
-      case INTERRUPT_EVENT_ENC_DETECT:
-        if (!isFilamentOut() && isPrinting()) {
-          setFilamentOut(true);
-          planner.synchronize();
-
-          #if ENABLED(ADVANCED_PAUSE_FEATURE)
-            commands.enqueue_and_echo_P(PSTR("M600"));
-          #endif
-        }
-        break;
-    #endif
-
-    default:
-      break;
-  }
 }
 
 /**

@@ -66,10 +66,10 @@ inline void gcode_M115(void) {
   SERIAL_CAP("PRINT_JOB:1");
 
   // Command pause stop
-  SERIAL_CAP("PAUSESTOP:0");
+  SERIAL_CAP("PAUSESTOP:1");
 
   // Prompt support
-  SERIAL_CAP("PROMPT_SUPPORT:0");
+  SERIAL_CAP("PROMPT_SUPPORT:1");
 
   // AUTOLEVEL (G29)
   #if HAS_ABL

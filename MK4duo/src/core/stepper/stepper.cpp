@@ -1327,11 +1327,6 @@ void Stepper::pulse_phase_step() {
     // Start an active pulse
     pulse_tick_start();
 
-    // Test Encoder if exist
-    #if HAS_EXT_ENCODER
-      test_extruder_encoder();
-    #endif
-
     if (minimum_pulse) {
       // Just wait for the requested pulse time.
       while (HAL_timer_get_current_count(STEPPER_TIMER) < pulse_end) { /* nada */ }
@@ -1389,6 +1384,9 @@ uint32_t Stepper::block_phase_step() {
 
     // If current block is finished, reset pointer
     if (step_events_completed >= step_event_count) {
+      #if ENABLED(EXTRUDER_ENCODER_CONTROL) && FILAMENT_RUNOUT_DISTANCE_MM > 0
+        filamentrunout.block_completed(current_block);
+      #endif
       axis_did_move = 0;
       current_block = NULL;
       planner.discard_current_block();
@@ -3271,30 +3269,6 @@ void Stepper::_set_position(const int32_t &a, const int32_t &b, const int32_t &c
     static const uint8_t microstep_modes[] = { X_MICROSTEPS, Y_MICROSTEPS, Z_MICROSTEPS, E0_MICROSTEPS };
     for (uint16_t i = 0; i < COUNT(microstep_modes); i++)
       microstep_mode(i, microstep_modes[i]);
-  }
-
-#endif
-
-#if HAS_EXT_ENCODER
-
-  void Stepper::test_extruder_encoder() {
-
-    static const pin_t encoder_pin[] = { E0_ENC_PIN, E1_ENC_PIN, E2_ENC_PIN, E3_ENC_PIN, E4_ENC_PIN, E5_ENC_PIN };
-
-    if (delta_error[E_AXIS] >= 0 && encoder_pin[active_extruder] > 0) {
-      const uint8_t sig = READ_ENCODER(encoder_pin[active_extruder]);
-      tools.encStepsSinceLastSignal[active_extruder] += tools.encLastDir[active_extruder];
-      if (tools.encLastSignal[active_extruder] != sig && ABS(tools.encStepsSinceLastSignal[active_extruder] - tools.encLastChangeAt[active_extruder]) > ENC_MIN_STEPS) {
-        if (sig) tools.encStepsSinceLastSignal[active_extruder] = 0;
-        tools.encLastSignal[active_extruder] = sig;
-        tools.encLastChangeAt[active_extruder] = tools.encStepsSinceLastSignal[active_extruder];
-      }
-      else if (ABS(tools.encStepsSinceLastSignal[active_extruder]) > tools.encErrorSteps[active_extruder]) {
-        if (tools.encLastDir[active_extruder] > 0)
-          printer.setInterruptEvent(INTERRUPT_EVENT_ENC_DETECT);
-      }
-    }
-
   }
 
 #endif

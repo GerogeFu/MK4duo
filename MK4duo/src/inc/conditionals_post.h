@@ -436,14 +436,6 @@
 #define HAS_E5_MICROSTEPS   (PIN_EXISTS(E5_MS1))
 #define HAS_SOLENOID_5      (PIN_EXISTS(SOL5))
 
-// Extruder Encoder
-#define HAS_E0_ENC          (PIN_EXISTS(E0_ENC))
-#define HAS_E1_ENC          (PIN_EXISTS(E1_ENC))
-#define HAS_E2_ENC          (PIN_EXISTS(E2_ENC))
-#define HAS_E3_ENC          (PIN_EXISTS(E3_ENC))
-#define HAS_E4_ENC          (PIN_EXISTS(E4_ENC))
-#define HAS_E5_ENC          (PIN_EXISTS(E5_ENC))
-
 #define HAS_SENSORLESS      (TMC_HAS_STALLGUARD && (ENABLED(SENSORLESS_HOMING) || ENABLED(Z_PROBE_SENSORLESS)))
 
 // Disable Z axis sensorless homing if a probe is used to home the Z axis
@@ -542,6 +534,12 @@
 #define HAS_FIL_RUNOUT_5              (ENABLED(FILAMENT_RUNOUT_SENSOR) && PIN_EXISTS(FIL_RUNOUT_5))
 #define HAS_DAV_SYSTEM                (ENABLED(FILAMENT_RUNOUT_DAV_SYSTEM) && PIN_EXISTS(FIL_RUNOUT_DAV))
 #define HAS_POWER_CONSUMPTION_SENSOR  (ENABLED(POWER_CONSUMPTION) && PIN_EXISTS(POWER_CONSUMPTION))
+
+// Extruder Encoder
+#if ENABLED(EXTRUDER_ENCODER_CONTROL) && FILAMENT_RUNOUT_DISTANCE_MM == 0
+  #undef FILAMENT_RUNOUT_DISTANCE_MM
+  #define FILAMENT_RUNOUT_DISTANCE_MM 5
+#endif
 
 /**
  * Shorthand for filament sensor and power sensor for ultralcd.cpp, dogm_lcd_implementation.h, ultralcd_implementation_hitachi_HD44780.h
@@ -658,9 +656,6 @@
   #define HAS_FOLDER_SORTING  (FOLDER_SORTING || ENABLED(SDSORT_GCODE))
 #endif
 #define HAS_SD_RESTART        (HAS_SD_SUPPORT && ENABLED(SD_RESTART_FILE))
-
-// Extruder Encoder
-#define HAS_EXT_ENCODER       (ENABLED(EXTRUDER_ENCODER_CONTROL) && (HAS_E0_ENC || HAS_E1_ENC || HAS_E2_ENC || HAS_E3_ENC || HAS_E4_ENC || HAS_E5_ENC))
 
 // Other
 #define HAS_Z_PROBE_SLED      (ENABLED(Z_PROBE_SLED) && PIN_EXISTS(SLED))
@@ -1024,17 +1019,6 @@
   #define FAN_INVERTED true
 #else
   #define FAN_INVERTED false
-#endif
-
-/**
- * Extruder Encoder
- */
-#if HAS_EXT_ENCODER
-  #if ENABLED(INVERTED_ENCODER_PINS)
-    #define READ_ENCODER(v) !HAL::digitalRead(v)
-  #else
-    #define READ_ENCODER(v) HAL::digitalRead(v)
-  #endif
 #endif
 
 /**
