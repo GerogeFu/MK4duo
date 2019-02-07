@@ -84,7 +84,9 @@ bool TMC_Stepper::report_status = false;
 /** Public Function */
 void TMC_Stepper::init() {
 
-  init_cs_pins();
+  #if TMC_HAS_SPI
+    init_cs_pins();
+  #endif
 
   #if HAVE_DRV(TMC2660)
 
@@ -981,29 +983,28 @@ bool TMC_Stepper::test_connection(MKTMC* st) {
       constexpr uint8_t OTPW_bp = 2;
       constexpr uint32_t OT_bm = 0x2UL;
       constexpr uint8_t OT_bp = 1;
-      constexpr uint8_t DRIVER_ERROR_bm = 0x6;
       TMC_driver_data data;
       data.drv_status = st->DRVSTATUS();
       data.is_otpw = (data.drv_status & OTPW_bm) >> OTPW_bp;
       data.is_ot = (data.drv_status & OT_bm) >> OT_bp;
-      data.is_error = data.drv_status & DRIVER_ERROR_bm;
       return data;
     }
 
-  #elif HAVE_DRV(TMC2130)
+  #elif HAVE_DRV(TMC2130) || HAVE_DRV(TMC2160) || HAVE_DRV(TMC5130) || HAVE_DRV(TMC5160)
 
     TMC_driver_data TMC_Stepper::get_driver_data(MKTMC* st) {
       constexpr uint32_t OTPW_bm = 0x4000000UL;
       constexpr uint8_t OTPW_bp = 26;
       constexpr uint32_t OT_bm = 0x2000000UL;
       constexpr uint8_t OT_bp = 25;
-      constexpr uint8_t DRIVER_ERROR_bm = 0x2UL;
-      constexpr uint8_t DRIVER_ERROR_bp = 1;
+      constexpr uint8_t S2GA_bp = 27;
+      constexpr uint8_t S2GB_bp = 28;
       TMC_driver_data data;
       data.drv_status = st->DRV_STATUS();
       data.is_otpw = (data.drv_status & OTPW_bm) >> OTPW_bp;
       data.is_ot = (data.drv_status & OT_bm) >> OT_bp;
-      data.is_error = (st->status_response & DRIVER_ERROR_bm) >> DRIVER_ERROR_bp;
+      data.is_s2ga = (data.drv_status >> S2GA_bp) & 0b1;
+      data.is_s2gb = (data.drv_status >> S2GB_bp) & 0b1;
       return data;
     }
 
@@ -1013,22 +1014,25 @@ bool TMC_Stepper::test_connection(MKTMC* st) {
       uint8_t TMC_Stepper::get_status_response(MKTMC* st, uint32_t drv_status) {
         uint8_t gstat = st->GSTAT();
         uint8_t response = 0;
-        response |= (drv_status >> (31 - 3)) & 0B1000;
-        response |= gstat & 0B11;
+        response |= (drv_status >> (31 - 3)) & 0b1000;
+        response |= gstat & 0b11;
         return response;
       }
     #endif
 
     TMC_driver_data TMC_Stepper::get_driver_data(MKTMC* st) {
-      constexpr uint32_t OTPW_bm = 0B1UL;
+      constexpr uint32_t OTPW_bm = 0b1ul;
       constexpr uint8_t OTPW_bp = 0;
-      constexpr uint32_t OT_bm = 0B10UL;
+      constexpr uint32_t OT_bm = 0b10ul;
       constexpr uint8_t OT_bp = 1;
+      constexpr uint8_t S2GA_bp = 2;
+      constexpr uint8_t S2GB_bp = 3;
       TMC_driver_data data;
-      data.drv_status = st->DRV_STATUS();
+      data.drv_status = st.DRV_STATUS();
       data.is_otpw = (data.drv_status & OTPW_bm) >> OTPW_bp;
       data.is_ot = (data.drv_status & OT_bm) >> OT_bp;
-      data.is_error = st->drv_err();
+      data.is_s2ga = (data.drv_status >> S2GA_bp) & 0b1;
+      data.is_s2gb = (data.drv_status >> S2GB_bp) & 0b1;
       return data;
     }
 
@@ -1048,8 +1052,8 @@ bool TMC_Stepper::test_connection(MKTMC* st) {
         st->printLabel();
         SERIAL_MSG(" driver error detected: 0x");
         if (data.is_ot) SERIAL_EM("overtemperature");
-        if (st->s2ga()) SERIAL_EM("short to ground (coil A)");
-        if (st->s2gb()) SERIAL_EM("short to ground (coil B)");
+        if (data.is_s2ga) SERIAL_EM("short to ground (coil A)");
+        if (data.is_s2gb) SERIAL_EM("short to ground (coil B)");
         #if ENABLED(TMC_DEBUG)
           report_all(true, true, true, true);
         #endif
