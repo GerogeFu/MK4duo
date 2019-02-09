@@ -541,6 +541,9 @@
   #define FILAMENT_RUNOUT_DISTANCE_MM 5
 #endif
 
+// Service time 
+#define HAS_SERVICE_TIMES   (ENABLED(SERVICE_TIME_1) || ENABLED(SERVICE_TIME_2) || ENABLED(SERVICE_TIME_3))
+
 /**
  * Shorthand for filament sensor and power sensor for ultralcd.cpp, dogm_lcd_implementation.h, ultralcd_implementation_hitachi_HD44780.h
  */
