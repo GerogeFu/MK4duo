@@ -341,13 +341,14 @@ void PrintCounter::reset() {
   void PrintCounter::service_when(char buffer[], const char * const msg, const uint32_t when) {
     duration_t elapsed = when;
     elapsed.toString(buffer);
-    SERIAL_MSG(MSG_STATS);
+    SERIAL_MSG(MSG_SERVICE);
     SERIAL_PGM(msg);
     SERIAL_EMT(" in ", buffer);
   }
 
   bool PrintCounter::service_warning(const char * const msg) {
-    SERIAL_SM(ECHO, msg);
+    SERIAL_STR(ECHO);
+    SERIAL_PGM(msg);
     SERIAL_CHR('!');
     SERIAL_EOL();
     return true;
