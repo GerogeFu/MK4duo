@@ -235,7 +235,7 @@ class Commands {
      * Search M29 command
      */
     FORCE_INLINE static bool is_M29(const char * const cmd) {
-      return cmd[0] == 'M' && cmd[1] == '2' && cmd[2] == '9' && !WITHIN(cmd[3], '0', '9');
+      return strstr_P(cmd, PSTR("M29"));
     }
 
 };

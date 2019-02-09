@@ -32,10 +32,15 @@
 
 #include <stdint.h>
 
-struct FatPos_t {
+/**
+ * \struct filepos_t
+ * \brief internal type for istream
+ * do not use in user apps
+ */
+struct filepos_t {
   uint32_t position;  // stream byte position
   uint32_t cluster;   // cluster of position
-  FatPos_t() : position(0), cluster(0) {}
+  filepos_t() : position(0), cluster(0) {}
 };
 
 // use the gnu style oflag in open()
@@ -174,11 +179,11 @@ class SdBaseFile {
     /** get position for streams
      * \param[out] pos struct to receive position
      */
-    void getpos(FatPos_t* pos);
+    void getpos(filepos_t* pos);
     /** set position for streams
      * \param[out] pos struct with value for new position
      */
-    void setpos(FatPos_t* pos);
+    void setpos(filepos_t* pos);
     
     /** \return number of bytes available from yhe current position to EOF */
     uint32_t available() { return fileSize() - curPosition(); }
@@ -235,8 +240,8 @@ class SdBaseFile {
     /** \return The first cluster number for a file or directory. */
     uint32_t firstCluster() const { return firstCluster_; }
     bool getFilename(char* name);
-    uint8_t lfn_checksum(const unsigned char *pFCBName);
-    bool openParentReturnFile(SdBaseFile* dirFile, const char * path, uint8_t *dname, SdBaseFile *newParent, bool bMakeDirs);
+    uint8_t lfn_checksum(const uint8_t* pFCBName);
+    bool openParentReturnFile(SdBaseFile* dirFile, const char * path, uint8_t* dname, SdBaseFile* newParent, bool bMakeDirs);
 
     /** \return True if this is a directory else false. */
     bool isDir() const {return type_ >= FAT_FILE_TYPE_MIN_DIR;}
@@ -258,7 +263,7 @@ class SdBaseFile {
     }
     bool open(SdBaseFile* dirFile, uint16_t index, uint8_t oflag);
     bool open(SdBaseFile* dirFile, const char * path, uint8_t oflag);
-    bool open(PGM_P path, uint8_t oflag = O_READ);
+    bool open(const char * path, uint8_t oflag=O_READ);
     bool openNext(SdBaseFile* dirFile, uint8_t oflag);
     bool openRoot(SdVolume* vol);
     int8_t readDir(dir_t& dir) { return readDir(&dir); }
@@ -343,12 +348,12 @@ class SdBaseFile {
     bool openParent(SdBaseFile* dir);
     // private functions
     bool addCluster();
-    cache_t* addDirCluster();
+    bool addDirCluster();
     dir_t* cacheDirEntry(uint8_t action);
     int8_t lsPrintNext(uint8_t flags, uint8_t indent);
     static bool make83Name(PGM_P str, uint8_t* name, const char** ptr);
-    bool mkdir(SdBaseFile* parent, const uint8_t *dname);
-    bool open(SdBaseFile* dirFile, const uint8_t *dname, uint8_t oflag, bool bDir);
+    bool mkdir(SdBaseFile* parent, const uint8_t* dname);
+    bool open(SdBaseFile* dirFile, const uint8_t* dname, uint8_t oflag, bool bDir);
     bool openCachedEntry(uint8_t cacheIndex, uint8_t oflags);
     dir_t* readDirCache();
     dir_t* readDirCacheSpecial();

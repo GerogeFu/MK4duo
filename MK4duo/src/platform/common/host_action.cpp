@@ -42,44 +42,58 @@ void Host_Action::response_handler(const uint8_t response) {
         #if ENABLED(ADVANCED_PAUSE_FEATURE)
           advancedpause.menu_response = ADVANCED_PAUSE_RESPONSE_EXTRUDE_MORE;
         #endif
+        prompt_begin(PSTR("Paused"));
+        prompt_button(PSTR("Purge More"));
+        if (false
+          #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+            || filamentrunout.isFilamentOut()
+          #endif
+        )
+          prompt_button(PSTR("DisableRunout"));
+        else {
+          prompt_reason = PROMPT_FILAMENT_RUNOUT;
+          prompt_button(PSTR("Continue"));
+        }
+        prompt_show();
       }
       else if (response == 1) {
         #if ENABLED(FILAMENT_RUNOUT_SENSOR)
-          filamentrunout.setEnabled(false);
-          filamentrunout.reset();
+          if (filamentrunout.isFilamentOut()) {
+            filamentrunout.setEnabled(false);
+            filamentrunout.reset();
+          }
         #endif
         #if ENABLED(ADVANCED_PAUSE_FEATURE)
           advancedpause.menu_response = ADVANCED_PAUSE_RESPONSE_RESUME_PRINT;
         #endif
-        printer.setWaitForUser(false);
+        prompt_reason = PROMPT_NOT_DEFINED;
       }
       say_m876_response(PSTR("FILAMENT_RUNOUT"));
       break;
-    case PROMPT_FILAMENT_RUNOUT_CONTINUE:
-      #if ENABLED(ADVANCED_PAUSE_FEATURE)
-        if (response == 0)
-          advancedpause.menu_response = ADVANCED_PAUSE_RESPONSE_EXTRUDE_MORE;
-        else if (response == 1)
-          advancedpause.menu_response = ADVANCED_PAUSE_RESPONSE_RESUME_PRINT;
-      #endif
-      say_m876_response(PSTR("FILAMENT_RUNOUT_CONTINUE"));
-      break;
     case PROMPT_FILAMENT_RUNOUT_REHEAT:
       printer.setWaitForUser(false);
+      prompt_reason = PROMPT_NOT_DEFINED;
       say_m876_response(PSTR("FILAMENT_RUNOUT_REHEAT"));
+      break;
+    case PROMPT_USER_CONTINUE:
+      printer.setWaitForUser(false);
+      prompt_reason = PROMPT_NOT_DEFINED;
+      say_m876_response(PSTR("USER_CONTINUE"));
       break;
     case PROMPT_PAUSE_RESUME:
       commands.enqueue_and_echo_P(PSTR("M24"));
+      prompt_reason = PROMPT_NOT_DEFINED;
       say_m876_response(PSTR("LCD_PAUSE_RESUME"));
       break;
     case PROMPT_INFO:
+      prompt_reason = PROMPT_NOT_DEFINED;
       say_m876_response(PSTR("GCODE_INFO"));
       break;
     default:
+      prompt_reason = PROMPT_NOT_DEFINED;
       say_m876_response(PSTR("UNKNOWN STATE"));
       break;
   }
-  host_action.prompt_reason = PROMPT_NOT_DEFINED;
 }
 
 void Host_Action::filrunout(const uint8_t t) {
@@ -109,7 +123,7 @@ void Host_Action::prompt_do(const HostPromptEnum reason, PGM_P const pstr, PGM_P
 
 /** Private Function */
 void Host_Action::print_action(PGM_P const msg, const bool eol/*=true*/) {
-  SERIAL_MSG("// action:");
+  SERIAL_MSG("//action:");
   SERIAL_PGM(msg);
   if (eol) SERIAL_EOL();
 }

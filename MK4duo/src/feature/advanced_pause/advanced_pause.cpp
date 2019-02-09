@@ -176,6 +176,8 @@ void AdvancedPause::wait_for_confirmation(const bool is_reload/*=false*/, const 
   // Wait for filament insert by user and press button
   printer.keepalive(PausedforUser);
   printer.setWaitForUser(true); // LCD click or M108 will clear this
+  host_action.prompt_do(PROMPT_USER_CONTINUE, PSTR("Nozzle Parked"), PSTR("Continue"));
+
   while (printer.isWaitForUser()) {
     #if HAS_BUZZER
       filament_change_beep(max_beep_count);
@@ -194,7 +196,7 @@ void AdvancedPause::wait_for_confirmation(const bool is_reload/*=false*/, const 
       SERIAL_STR(ECHO);
       SERIAL_EM(_PMSG(MSG_FILAMENT_CHANGE_HEAT));
 
-      host_action.prompt_do(PROMPT_FILAMENT_RUNOUT_REHEAT, PSTR("HeaterTimeout"), PSTR("Reheat"));
+      host_action.prompt_do(PROMPT_USER_CONTINUE, PSTR("HeaterTimeout"), PSTR("Reheat"));
 
       // Wait for LCD click or M108
       while (printer.isWaitForUser()) {
@@ -213,7 +215,7 @@ void AdvancedPause::wait_for_confirmation(const bool is_reload/*=false*/, const 
         printer.idle(true);
       }
 
-      host_action.prompt_do(PROMPT_FILAMENT_RUNOUT_REHEAT, PSTR("Reheating"));
+      host_action.prompt_do(PROMPT_USER_CONTINUE, PSTR("Reheating"));
 
       // Re-enable the bed if they timed out
       #if HAS_TEMP_BED && PAUSE_PARK_PRINTER_OFF > 0
@@ -237,7 +239,9 @@ void AdvancedPause::wait_for_confirmation(const bool is_reload/*=false*/, const 
         heaters[BED_INDEX].start_idle_timer(bed_timeout);
       #endif
 
-      printer.setWaitForUser(true); /* Wait for user to load filament */
+      host_action.prompt_do(PROMPT_USER_CONTINUE, PSTR("Reheat Done"), PSTR("Continue"));
+
+      printer.setWaitForUser(true);
       nozzle_timed_out = false;
       bed_timed_out = false;
 
@@ -393,6 +397,14 @@ bool AdvancedPause::load_filament(const float &slow_load_length/*=0*/, const flo
 
     printer.keepalive(PausedforUser);
     printer.setWaitForUser(true);    // LCD click or M108 will clear this
+
+    host_action.prompt_reason = PROMPT_USER_CONTINUE;
+    host_action.prompt_begin(PSTR("Load Filament T"), false);
+    SERIAL_VAL(tools.active_extruder);
+    SERIAL_EOL();
+    host_action.prompt_button(PSTR("Continue"));
+    host_action.prompt_show();
+
     while (printer.isWaitForUser()) {
       #if HAS_BUZZER
         filament_change_beep(max_beep_count);
@@ -439,6 +451,20 @@ bool AdvancedPause::load_filament(const float &slow_load_length/*=0*/, const flo
     }
 
     // Show "Purge More" / "Resume" menu and wait for reply
+    host_action.prompt_reason = PROMPT_FILAMENT_RUNOUT;
+    host_action.prompt_begin(PSTR("Paused"));
+    host_action.prompt_button(PSTR("PurgeMore"));
+    if (false
+      #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+        || filamentrunout.isFilamentOut()
+      #endif
+    )
+      host_action.prompt_button(PSTR("DisableRunout"));
+    else {
+      host_action.prompt_reason = PROMPT_FILAMENT_RUNOUT;
+      host_action.prompt_button(PSTR("Continue"));
+    }
+    host_action.prompt_show();
     #if HAS_LCD_MENU
       if (show_lcd) {
         printer.keepalive(PausedforUser);
@@ -514,22 +540,6 @@ void AdvancedPause::show_continue_prompt(const bool is_reload) {
   #endif
   SERIAL_STR(ECHO);
   SERIAL_PGM(is_reload ? PSTR(_PMSG(MSG_FILAMENT_CHANGE_INSERT) "\n") : PSTR(_PMSG(MSG_FILAMENT_CHANGE_WAIT) "\n"));
-
-  host_action.prompt_reason = PROMPT_FILAMENT_RUNOUT_CONTINUE;
-  host_action.prompt_begin(PSTR("Paused"));
-  host_action.prompt_button(PSTR("PurgeMore"));
-
-  if (false
-    #if ENABLED(FILAMENT_RUNOUT_SENSOR)
-      || filamentrunout.isFilamentOut()
-    #endif
-  )
-    host_action.prompt_button(PSTR("DisableRunout"));
-  else {
-    host_action.prompt_reason = PROMPT_FILAMENT_RUNOUT;
-    host_action.prompt_button(PSTR("Continue"));
-  }
-  host_action.prompt_show();
 }
 
 /**
