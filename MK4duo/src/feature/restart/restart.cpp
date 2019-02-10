@@ -117,7 +117,7 @@
           #endif
       #endif
 
-      #if ENABLED(COLOR_MIXING_EXTRUDER)
+      #if ENABLED(COLOR_MIXING_EXTRUDER) && HAS_GRADIENT_MIX
         memcpy(&job_info.gradient, &mixer.gradient, sizeof(job_info.gradient));
       #endif
 
@@ -191,7 +191,7 @@
       bedlevel.set_bed_leveling_enabled(job_info.leveling);
     #endif
 
-    #if ENABLED(COLOR_MIXING_EXTRUDER)
+    #if ENABLED(COLOR_MIXING_EXTRUDER) && HAS_GRADIENT_MIX
       memcpy(&mixer.gradient, &job_info.gradient, sizeof(job_info.gradient));
     #endif
 
