@@ -72,9 +72,9 @@ void PrintCounter::initStats() {
   data.filamentUsed   = 0.0;
 
   #if HAS_SERVICE_TIMES
-    data.nextService1 = SERVICE_TIME_1_SEC;
-    data.nextService2 = SERVICE_TIME_2_SEC;
-    data.nextService3 = SERVICE_TIME_3_SEC;
+    data.ServiceTime1 = SERVICE_TIME_1_SEC;
+    data.ServiceTime2 = SERVICE_TIME_2_SEC;
+    data.ServiceTime3 = SERVICE_TIME_3_SEC;
   #endif
 
   #if HAS_POWER_CONSUMPTION_SENSOR
@@ -122,13 +122,13 @@ void PrintCounter::showStats() {
   SERIAL_EMT("Filament used:", buffer);
 
   #if ENABLED(SERVICE_TIME_1)
-    service_when(buffer, PSTR(SERVICE_NAME_1), data.nextService1);
+    service_when(buffer, PSTR(SERVICE_NAME_1), data.ServiceTime1);
   #endif
   #if ENABLED(SERVICE_TIME_2)
-    service_when(buffer, PSTR(SERVICE_NAME_2), data.nextService2);
+    service_when(buffer, PSTR(SERVICE_NAME_2), data.ServiceTime2);
   #endif
   #if ENABLED(SERVICE_TIME_3)
-    service_when(buffer, PSTR(SERVICE_NAME_3), data.nextService3);
+    service_when(buffer, PSTR(SERVICE_NAME_3), data.ServiceTime3);
   #endif
 
   #if HAS_POWER_CONSUMPTION_SENSOR
@@ -165,16 +165,16 @@ void PrintCounter::loadStats() {
 
     bool doBuzz = false;
     #if ENABLED(SERVICE_TIME_1)
-      if (data.nextService1 == 0) doBuzz = service_warning(PSTR(" " SERVICE_NAME_1));
+      if (data.ServiceTime1 == 0) doBuzz = service_warning(PSTR(" " SERVICE_NAME_1));
     #endif
     #if ENABLED(SERVICE_TIME_2)
-      if (data.nextService2 == 0) doBuzz = service_warning(PSTR(" " SERVICE_NAME_2));
+      if (data.ServiceTime2 == 0) doBuzz = service_warning(PSTR(" " SERVICE_NAME_2));
     #endif
     #if ENABLED(SERVICE_TIME_3)
-      if (data.nextService3 == 0) doBuzz = service_warning(PSTR(" " SERVICE_NAME_3));
+      if (data.ServiceTime3 == 0) doBuzz = service_warning(PSTR(" " SERVICE_NAME_3));
     #endif
     #if HAS_BUZZER && SERVICE_WARNING_BUZZES > 0
-      if (doBuzz) for (uint8_t i = 0; i < SERVICE_WARNING_BUZZES; i++) sound.playTone(200, 404);
+      if (doBuzz) for (uint8_t i = 0; i < SERVICE_WARNING_BUZZES; i++) sound.playTone(200, NOTE_A4);
     #endif
 
   #endif // HAS_SERVICE_TIMES
@@ -213,13 +213,13 @@ void PrintCounter::tick() {
     data.timePowerOn += STATS_UPDATE_INTERVAL;
 
     #if ENABLED(SERVICE_TIME_1)
-      data.nextService1 -= MIN(delta, data.nextService1);
+      data.ServiceTime1 -= MIN(delta, data.ServiceTime1);
     #endif
     #if ENABLED(SERVICE_TIME_2)
-      data.nextService2 -= MIN(delta, data.nextService2);
+      data.ServiceTime2 -= MIN(delta, data.ServiceTime2);
     #endif
     #if ENABLED(SERVICE_TIME_3)
-      data.nextService3 -= MIN(delta, data.nextService3);
+      data.ServiceTime3 -= MIN(delta, data.ServiceTime3);
     #endif
 
     update_next = now + (STATS_UPDATE_INTERVAL * 1000);
@@ -248,13 +248,13 @@ void PrintCounter::incFilamentUsed(float const &amount) {
   void PrintCounter::resetServiceTime(const int index) {
     switch (index) {
       #if ENABLED(SERVICE_TIME_1)
-        case 1: data.nextService1 = SERVICE_TIME_1_SEC;
+        case 1: data.ServiceTime1 = SERVICE_TIME_1_SEC;
       #endif
       #if ENABLED(SERVICE_TIME_2)
-        case 2: data.nextService2 = SERVICE_TIME_2_SEC;
+        case 2: data.ServiceTime2 = SERVICE_TIME_2_SEC;
       #endif
       #if ENABLED(SERVICE_TIME_3)
-        case 3: data.nextService3 = SERVICE_TIME_3_SEC;
+        case 3: data.ServiceTime3 = SERVICE_TIME_3_SEC;
       #endif
     }
     saveStats();
@@ -263,13 +263,13 @@ void PrintCounter::incFilamentUsed(float const &amount) {
   bool PrintCounter::needService(const int index) {
     switch (index) {
       #if ENABLED(SERVICE_TIME_1)
-        case 1: return data.nextService1 == 0;
+        case 1: return data.ServiceTime1 == 0;
       #endif
       #if ENABLED(SERVICE_TIME_2)
-        case 2: return data.nextService2 == 0;
+        case 2: return data.ServiceTime2 == 0;
       #endif
       #if ENABLED(SERVICE_TIME_3)
-        case 3: return data.nextService3 == 0;
+        case 3: return data.ServiceTime3 == 0;
       #endif
       default: return false;
     }

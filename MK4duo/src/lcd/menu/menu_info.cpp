@@ -65,21 +65,21 @@ void menu_info_stats() {
   #endif
 
   #if ENABLED(SERVICE_TIME_1)
-    elapsed = stats.nextService1;
+    elapsed = stats.ServiceTime1;
     elapsed.toString(buffer);
     STATIC_ITEM(SERVICE_NAME_1 " in: ", false, false);
     STATIC_ITEM(">", false, false, buffer);
   #endif
 
   #if ENABLED(SERVICE_TIME_2)
-    elapsed = stats.nextService2;
+    elapsed = stats.ServiceTime2;
     elapsed.toString(buffer);
     STATIC_ITEM(SERVICE_NAME_2 " in: ", false, false);
     STATIC_ITEM("> ", false, false, buffer);
   #endif
 
   #if ENABLED(SERVICE_TIME_3)
-    elapsed = stats.nextService3;
+    elapsed = stats.ServiceTime3;
     elapsed.toString(buffer);
     STATIC_ITEM(SERVICE_NAME_3 " in: ", false, false);
     STATIC_ITEM("> ", false, false, buffer);

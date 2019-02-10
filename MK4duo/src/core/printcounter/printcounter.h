@@ -34,9 +34,9 @@ struct printStatistics {
   float     filamentUsed;     // Accumulated filament consumed in mm
 
   #if HAS_SERVICE_TIMES
-    uint32_t  nextService1,   // Service Time 1
-              nextService2,   // Service Time 2
-              nextService3;   // Service Time 3
+    uint32_t  ServiceTime1,   // Service Time 1
+              ServiceTime2,   // Service Time 2
+              ServiceTime3;   // Service Time 3
   #endif
 
   #if HAS_POWER_CONSUMPTION_SENSOR

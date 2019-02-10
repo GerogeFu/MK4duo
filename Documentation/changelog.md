@@ -13,6 +13,8 @@
 * Fix Mixer color routine
 * Add M166 Set the Gradient Mix for the mixing extruder. (Requires COLOR_MIXING_EXTRUDER)
 * Fix Scara
+* Add Service Timer
+* Fix timer stepper with TMC2130 bug
 * Clear code
 
 ### Version 4.3.7
