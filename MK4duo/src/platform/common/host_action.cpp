@@ -22,6 +22,8 @@
 
 #include "../../../MK4duo.h"
 
+//#define DEBUG_HOST_ACTIONS
+
 Host_Action host_action;
 
 /** Public Parameters */
@@ -36,8 +38,18 @@ void Host_Action::say_m876_response(PGM_P const msg) {
 
 void Host_Action::response_handler(const uint8_t response) {
 
-  switch (prompt_reason) {
+  #ifdef DEBUG_HOST_ACTIONS
+    SERIAL_MV("M876 Handle Reason: ", prompt_reason);
+    SERIAL_MV("M876 Handle Response: ", response);
+  #endif
+
+  PGM_P msg = PSTR("UNKNOWN STATE");
+  const HostPromptEnum temp_pr = prompt_reason;
+  prompt_reason = PROMPT_NOT_DEFINED;
+
+  switch (temp_pr) {
     case PROMPT_FILAMENT_RUNOUT:
+      msg = PSTR("FILAMENT_RUNOUT");
       if (response == 0) {
         #if ENABLED(ADVANCED_PAUSE_FEATURE)
           advancedpause.menu_response = ADVANCED_PAUSE_RESPONSE_EXTRUDE_MORE;
@@ -66,34 +78,26 @@ void Host_Action::response_handler(const uint8_t response) {
         #if ENABLED(ADVANCED_PAUSE_FEATURE)
           advancedpause.menu_response = ADVANCED_PAUSE_RESPONSE_RESUME_PRINT;
         #endif
-        prompt_reason = PROMPT_NOT_DEFINED;
       }
-      say_m876_response(PSTR("FILAMENT_RUNOUT"));
       break;
     case PROMPT_FILAMENT_RUNOUT_REHEAT:
+      msg = PSTR("FILAMENT_RUNOUT_REHEAT");
       printer.setWaitForUser(false);
-      prompt_reason = PROMPT_NOT_DEFINED;
-      say_m876_response(PSTR("FILAMENT_RUNOUT_REHEAT"));
       break;
     case PROMPT_USER_CONTINUE:
+      msg = PSTR("USER_CONTINUE");
       printer.setWaitForUser(false);
-      prompt_reason = PROMPT_NOT_DEFINED;
-      say_m876_response(PSTR("USER_CONTINUE"));
       break;
     case PROMPT_PAUSE_RESUME:
+      msg = PSTR("LCD_PAUSE_RESUME");
       commands.enqueue_and_echo_P(PSTR("M24"));
-      prompt_reason = PROMPT_NOT_DEFINED;
-      say_m876_response(PSTR("LCD_PAUSE_RESUME"));
       break;
     case PROMPT_INFO:
-      prompt_reason = PROMPT_NOT_DEFINED;
-      say_m876_response(PSTR("GCODE_INFO"));
+      msg = PSTR("GCODE_INFO");
       break;
-    default:
-      prompt_reason = PROMPT_NOT_DEFINED;
-      say_m876_response(PSTR("UNKNOWN STATE"));
-      break;
+    default: break;
   }
+  say_m876_response(msg);
 }
 
 void Host_Action::filrunout(const uint8_t t) {

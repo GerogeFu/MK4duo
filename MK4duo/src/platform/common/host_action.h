@@ -37,12 +37,12 @@ class Host_Action {
 
     static void response_handler(const uint8_t response);
 
-    static void pause()     { print_action(PSTR("pause")); }
-    static void paused()    { print_action(PSTR("paused")); }
-    static void resume()    { print_action(PSTR("resume")); }
-    static void resumed()   { print_action(PSTR("resumed")); }
-    static void cancel()    { print_action(PSTR("cancel")); }
-    static void power_off() { print_action(PSTR("poweroff")); }
+    static void pause(const bool eol=true)  { print_action(PSTR("pause"), eol); }
+    static void paused(const bool eol=true) { print_action(PSTR("paused"), eol); }
+    static void resume()                    { print_action(PSTR("resume")); }
+    static void resumed()                   { print_action(PSTR("resumed")); }
+    static void cancel()                    { print_action(PSTR("cancel")); }
+    static void power_off()                 { print_action(PSTR("poweroff")); }
 
     static void filrunout(const uint8_t t);
 
