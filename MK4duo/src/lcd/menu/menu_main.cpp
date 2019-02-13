@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -157,8 +157,13 @@ void menu_main() {
       MENU_ITEM(function, MSG_RESUME_PRINT, lcdui.resume_print);
 
     MENU_ITEM(submenu, MSG_MOTION, menu_motion);
-    if (printer.mode == PRINTER_MODE_FFF)
-      MENU_ITEM(submenu, MSG_TEMPERATURE, menu_temperature);
+  }
+
+  if (printer.mode == PRINTER_MODE_FFF) {
+    MENU_ITEM(submenu, MSG_TEMPERATURE, menu_temperature);
+    #if ENABLED(COLOR_MIXING_EXTRUDER) && DISABLED(NEXTION)
+      MENU_ITEM(submenu, MSG_MIXER, menu_mixer);
+    #endif
   }
 
   MENU_ITEM(submenu, MSG_CONFIGURATION, menu_configuration);
@@ -168,9 +173,6 @@ void menu_main() {
   #endif
 
   if (printer.mode == PRINTER_MODE_FFF) {
-    #if ENABLED(COLOR_MIXING_EXTRUDER) && DISABLED(NEXTION)
-      MENU_ITEM(submenu, MSG_MIXER, menu_mixer);
-    #endif
     #if ENABLED(ADVANCED_PAUSE_FEATURE)
       #if DRIVER_EXTRUDERS == 1 && DISABLED(FILAMENT_LOAD_UNLOAD_GCODES)
         if (thermalManager.targetHotEnoughToExtrude(tools.active_extruder))

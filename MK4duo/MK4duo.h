@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -162,6 +162,7 @@
 #include "src/feature/tmc/tmc.h"
 #include "src/feature/power/power.h"
 #include "src/feature/mixing/mixing.h"
+#include "src/feature/mmu2/mmu2.h"
 #include "src/feature/filament/filament.h"
 #include "src/feature/filamentrunout/filamentrunout.h"
 #include "src/feature/fwretract/fwretract.h"

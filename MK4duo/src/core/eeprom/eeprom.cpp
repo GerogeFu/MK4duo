@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -372,7 +372,7 @@ void EEPROM::post_process() {
   endstops.setup_pullup();
 
   // Setup FilRunout pullup
-  #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+  #if HAS_FILAMENT_SENSOR
     filamentrunout.sensor.setup_pullup();
   #endif
 
@@ -481,7 +481,7 @@ void EEPROM::post_process() {
     //
     // Filament Runout
     //
-    #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+    #if HAS_FILAMENT_SENSOR
       EEPROM_WRITE(filamentrunout.sensor.logic_flag);
       EEPROM_WRITE(filamentrunout.sensor.pullup_flag);
     #endif
@@ -857,7 +857,7 @@ void EEPROM::post_process() {
       //
       // Filament Runout
       //
-      #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+      #if HAS_FILAMENT_SENSOR
         EEPROM_READ(filamentrunout.sensor.logic_flag);
         EEPROM_READ(filamentrunout.sensor.pullup_flag);
       #endif
@@ -1783,7 +1783,7 @@ void EEPROM::reset() {
 
   #endif
 
-  #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+  #if HAS_FILAMENT_SENSOR
     filamentrunout.sensor.factory_parameters();
   #endif
 

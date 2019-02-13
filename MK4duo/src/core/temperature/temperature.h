@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ class Temperature {
 
     static millis_t next_check_ms[HEATER_COUNT];
 
-    #if ENABLED(FILAMENT_SENSOR)
+    #if ENABLED(FILAMENT_WIDTH_SENSOR)
       static int8_t   meas_shift_index;     // Index of a delayed sample in buffer
       static uint16_t current_raw_filwidth; // Measured filament diameter - one extruder only
     #endif
@@ -100,7 +100,7 @@ class Temperature {
       static void getTemperature_SPI();
     #endif
 
-    #if HAS_FILAMENT_SENSOR
+    #if ENABLED(FILAMENT_WIDTH_SENSOR)
       static int8_t widthFil_to_size_ratio(); // Convert Filament Width (mm) to an extrusion ratio
     #endif    
 
@@ -137,7 +137,7 @@ class Temperature {
 
   private:
 
-    #if HAS_FILAMENT_SENSOR
+    #if ENABLED(FILAMENT_WIDTH_SENSOR)
       static float analog2widthFil(); // Convert raw Filament Width to millimeters
     #endif
 

@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,10 +24,10 @@
 /**
  * filrunout.h
  *
- * Copyright (C) 2017 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  */
 
-#if ENABLED(FILAMENT_RUNOUT_SENSOR)
+#if HAS_FILAMENT_SENSOR
 
 //#define FILAMENT_RUNOUT_SENSOR_DEBUG
 
@@ -328,14 +328,8 @@ class FilamentSensorBase {
         runout_mm_countdown[extruder] = runout_distance_mm;
       }
 
-      static inline void block_completed(const block_t* const b) {
-        if (b->steps[X_AXIS] || b->steps[Y_AXIS] || b->steps[Z_AXIS]) {
-          // Only trigger on extrusion with XYZ movement to allow filament change and retract/recover.
-          const uint8_t e = b->active_extruder;
-          const int32_t steps = b->steps[E_AXIS];
-          runout_mm_countdown[e] -= (TEST(b->direction_bits, E_AXIS) ? -steps : steps) * mechanics.steps_to_mm[E_AXIS_N(e)];
-        }
-      }
+      static inline void block_completed(const block_t* const b);
+
   };
 
 #else // !FILAMENT_RUNOUT_DISTANCE_MM
@@ -374,4 +368,4 @@ class FilamentSensorBase {
 
 extern FilamentRunout filamentrunout;
 
-#endif // ENABLED(FILAMENT_RUNOUT_SENSOR)
+#endif // HAS_FILAMENT_SENSOR

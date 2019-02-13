@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -417,6 +417,16 @@
   #define DRIVER_EXTRUDERS  MIXING_STEPPERS
   #define E_MANUAL          1
   #define HAS_GRADIENT_MIX  (MIXING_STEPPERS == 2)
+#elif ENABLED(PRUSA_MMU2)                 // Multi-Material-Unit V2
+  #define SINGLENOZZLE
+  #undef  EXTRUDERS
+  #undef  DRIVER_EXTRUDERS
+  #define EXTRUDERS         5
+  #define DRIVER_EXTRUDERS  1
+  #define E_MANUAL          5
+  #ifndef TOOLCHANGE_ZRAISE
+    #define TOOLCHANGE_ZRAISE 0
+  #endif
 #else
   #define E_MANUAL          DRIVER_EXTRUDERS
 #endif

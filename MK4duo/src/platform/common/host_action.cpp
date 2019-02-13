@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ void Host_Action::response_handler(const uint8_t response) {
         prompt_begin(PSTR("Paused"));
         prompt_button(PSTR("Purge More"));
         if (false
-          #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+          #if HAS_FILAMENT_SENSOR
             || filamentrunout.isFilamentOut()
           #endif
         )
@@ -69,7 +69,7 @@ void Host_Action::response_handler(const uint8_t response) {
         prompt_show();
       }
       else if (response == 1) {
-        #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+        #if HAS_FILAMENT_SENSOR
           if (filamentrunout.isFilamentOut()) {
             filamentrunout.setEnabled(false);
             filamentrunout.reset();

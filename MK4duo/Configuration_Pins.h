@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -221,13 +221,8 @@
   #define EX2_CHOICE_PIN  NoPin
 #endif
 
-#if ENABLED(EXTRUDER_ENCODER_CONTROL)
-  #define E0_ENC_PIN NoPin
-  #define E1_ENC_PIN NoPin
-  #define E2_ENC_PIN NoPin
-  #define E3_ENC_PIN NoPin
-  #define E4_ENC_PIN NoPin
-  #define E5_ENC_PIN NoPin
+#if ENABLED(PRUSA_MMU2)
+  #define MMU2_RST_PIN    NoPin
 #endif
 
 #if ENABLED(LASER)
@@ -253,7 +248,7 @@
   #define FIL_RUNOUT_DAV_PIN  NoPin
 #endif
 
-#if ENABLED(FILAMENT_SENSOR)
+#if ENABLED(FILAMENT_WIDTH_SENSOR)
   #define FILWIDTH_PIN NoPin
 #endif
 

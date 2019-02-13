@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@
  * - Multiextruder MKR6
  * - Multiextruder MKR12
  * - Multiextruder MKSE6 (multiextruder with Servo)
+ * - Multi-Material-Unit v2
  * - Multiextruder DONDOLO
  * - Extruder idle oozing prevention
  * - Extruder run-out prevention
@@ -403,6 +404,36 @@
 #define MKSE6_SERVOPOS_E4   60
 #define MKSE6_SERVOPOS_E5   90
 #define MKSE6_SERVO_DELAY 1000
+/***********************************************************************/
+
+
+/***********************************************************************
+ ************************* Multi-Material-Unit *************************
+ ***********************************************************************
+ *                                                                     *
+ * Prusa Multi-Material Unit v2                                        *
+ *                                                                     *
+ * Requires NOZZLE_PARK_FEATURE to park print head in case             *
+ * MMU unit fails.                                                     *
+ * Requires EXTRUDERS = 5                                              *
+ *                                                                     *
+ ***********************************************************************/
+//#define PRUSA_MMU2
+
+// Serial port used for communication with MMU2.
+#define MMU2_SERIAL 1
+
+// Enable if the MMU2 has 12V stepper motors (MMU2 Firmware 1.0.2 and up)
+//#define MMU2_MODE_12V
+
+// G-code to execute when MMU2 F.I.N.D.A. probe detects filament runout
+#define MMU2_FILAMENT_RUNOUT_SCRIPT "M600"
+
+// Settings for filament load / unload from the LCD menu.
+// This is for Prusa MK3-style extruders. Customize for your hardware.
+#define MMU2_FILAMENTCHANGE_EJECT_FEED 80.0
+#define MMU2_LOAD_TO_NOZZLE_SEQUENCE  { 7.2, 562 }, { 14.4, 871 }, { 36.0, 1393 }, { 14.4, 871 }, { 50.0, 198 }
+#define MMU2_RAMMING_SEQUENCE { 1.0, 1000 }, { 1.0, 1500 }, { 2.0, 2000 }, { 1.5, 3000 }, { 2.5, 4000 }, { -15.0, 5000 }, { -14.0, 1200 }, { -6.0, 600 }, { 10.0, 700 }, { -10.0, 400 }, { -50.0, 2000 }
 /***********************************************************************/
 
 
@@ -929,7 +960,7 @@
  * You also need to set FILWIDTH_PIN in Configuration_pins.h                      *
  *                                                                                *
  **********************************************************************************/
-//#define FILAMENT_SENSOR
+//#define FILAMENT_WIDTH_SENSOR
 
 #define FILAMENT_SENSOR_EXTRUDER_NUM  0   // Index of the extruder that has the filament sensor. :[0,1,2,3,4,5]
 #define MEASUREMENT_DELAY_CM         14   // (cm) The distance from the filament sensor to the melting chamber

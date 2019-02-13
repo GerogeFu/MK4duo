@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ Temperature thermalManager;
 /** Private Parameters */
 uint8_t Temperature::pid_pointer = 255;
 
-#if ENABLED(FILAMENT_SENSOR)
+#if ENABLED(FILAMENT_WIDTH_SENSOR)
   int8_t    Temperature::meas_shift_index;          // Index of a delayed sample in buffer
   uint16_t  Temperature::current_raw_filwidth = 0;  // Measured filament diameter - one extruder only
 #endif
@@ -88,7 +88,7 @@ void Temperature::set_current_temp_raw() {
     powerManager.current_raw_powconsumption = HAL::AnalogInputValues[POWER_CONSUMPTION_PIN];
   #endif
 
-  #if HAS_FILAMENT_SENSOR
+  #if ENABLED(FILAMENT_WIDTH_SENSOR)
     current_raw_filwidth = HAL::AnalogInputValues[FILWIDTH_PIN];
   #endif
 
@@ -150,7 +150,7 @@ void Temperature::spin() {
   #endif
 
   // Control the extruder rate based on the width sensor
-  #if ENABLED(FILAMENT_SENSOR)
+  #if ENABLED(FILAMENT_WIDTH_SENSOR)
 
     filament_width_meas = analog2widthFil();
 
@@ -172,7 +172,7 @@ void Temperature::spin() {
       tools.refresh_e_factor(FILAMENT_SENSOR_EXTRUDER_NUM);
     }
 
-  #endif // FILAMENT_SENSOR
+  #endif // FILAMENT_WIDTH_SENSOR
   
   #if HAS_POWER_CONSUMPTION_SENSOR
 
@@ -507,7 +507,7 @@ bool Temperature::heaters_isActive() {
 
 #endif
 
-#if ENABLED(FILAMENT_SENSOR)
+#if ENABLED(FILAMENT_WIDTH_SENSOR)
 
   // Convert raw Filament Width to millimeters
   float Temperature::analog2widthFil() {

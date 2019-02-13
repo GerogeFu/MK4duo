@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 /**
  * advanced_pause.h
  *
- * Copyright (C) 2017 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  */
 
 #include "../../../MK4duo.h"
@@ -327,7 +327,7 @@ void AdvancedPause::resume_print(const float &slow_load_length/*=0*/, const floa
   // Set extruder to saved position
   planner.set_e_position_mm(mechanics.destination[E_AXIS] = mechanics.current_position[E_AXIS] = mechanics.stored_position[1][E_AXIS]);
 
-  #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+  #if HAS_FILAMENT_SENSOR
     filamentrunout.setFilamentOut(false);
   #endif
 
@@ -455,7 +455,7 @@ bool AdvancedPause::load_filament(const float &slow_load_length/*=0*/, const flo
     host_action.prompt_begin(PSTR("Paused"));
     host_action.prompt_button(PSTR("PurgeMore"));
     if (false
-      #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+      #if HAS_FILAMENT_SENSOR
         || filamentrunout.isFilamentOut()
       #endif
     )

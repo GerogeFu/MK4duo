@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -406,6 +406,12 @@ void watch_temp_callback_cooler();
 
 #if HAS_SD_RESTART
   void menu_sdcard_restart();
+#endif
+
+#if HAS_MMU2
+  void menu_mmu2();
+  void mmu2_M600();
+  uint8_t mmu2_chooseFilament();
 #endif
 
 #endif // HAS_LCD_MENU

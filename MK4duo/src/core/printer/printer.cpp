@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 /**
  * printer.cpp
  *
- * Copyright (C) 2017 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  */
 
 #include "../../../MK4duo.h"
@@ -176,7 +176,7 @@ void Printer::setup() {
   endstops.init();
 
   // Init Filament runout
-  #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+  #if HAS_FILAMENT_SENSOR
     filamentrunout.init();
   #endif
 
@@ -296,6 +296,10 @@ void Printer::setup() {
 
   #if HAS_TRINAMIC && !PS_DEFAULT_OFF
     tmc.test_connection(true, true, true, true);
+  #endif
+
+  #if HAS_MMU2
+    mmu2.init();
   #endif
 
 }
@@ -596,7 +600,7 @@ void Printer::idle(const bool ignore_stepper_queue/*=false*/) {
     cnc.manage();
   #endif
 
-  #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+  #if HAS_FILAMENT_SENSOR
     filamentrunout.spin();
   #endif
 
@@ -836,6 +840,10 @@ void Printer::idle(const bool ignore_stepper_queue/*=false*/) {
     tmc.monitor_driver();
   #endif
 
+  #if HAS_MMU2
+    mmu2.mmuLoop();
+  #endif
+
   // Reset the watchdog
   watchdog.reset();
 
@@ -851,7 +859,7 @@ void Printer::handle_interrupt_events() {
   if (interruptEvent == INTERRUPT_EVENT_NONE) return; // Exit if none Event
 
   switch(interruptEvent) {
-    #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+    #if HAS_FILAMENT_SENSOR
       case INTERRUPT_EVENT_FIL_RUNOUT:
         filamentrunout.setFilamentOut(true);
         host_action.prompt_reason = PROMPT_FILAMENT_RUNOUT_TRIPPED;

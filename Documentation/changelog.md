@@ -1,6 +1,7 @@
 ### Version 4.3.9
 * Add Prompt support for host
 * Rewrite filament runout
+* Add Prusa MMU2 Support
 * Fix and clear code
 
 ### Version 4.3.8

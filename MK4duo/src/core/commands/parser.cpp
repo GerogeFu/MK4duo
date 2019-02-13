@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -113,35 +113,55 @@ void GCodeParser::parse(char *p) {
   }
 
   // Bail if the letter is not G, M, or T
-  switch (letter) { case 'G': case 'M': case 'T': break; default: return; }
+  switch (letter) {
 
-  // Skip spaces to get the numeric part
-  while (*p == ' ') ++p;
+    case 'G': case 'M': case 'T':
 
-  // Bail if there's no command code number
-  if (!NUMERIC(*p)) return;
+      // Skip spaces to get the numeric part
+      while (*p == ' ') ++p;
 
-  // Save the command letter at this point
-  // A '?' signifies an unknown command
-  command_letter = letter;
+      // Bail if there's no command code number
+      // Prusa MMU2 has T?/Tx/Tc commands
+      #if !HAS_MMU2
+        if (!NUMERIC(*p)) return;
+      #endif
 
-  // Get the code number - integer digits only
-  codenum = 0;
-  do {
-    codenum *= 10, codenum += *p++ - '0';
-  } while (NUMERIC(*p));
+      // Save the command letter at this point
+      // A '?' signifies an unknown command
+      command_letter = letter;
 
-  // Allow for decimal point in command
-  #if USE_GCODE_SUBCODES
-    if (*p == '.') {
-      p++;
-      while (NUMERIC(*p))
-        subcode *= 10, subcode += *p++ - '0';
-    }
-  #endif
+      #if HAS_MMU2
+        if (letter == 'T') {
+          // check for special MMU2 T?/Tx/Tc commands
+          if (*p == '?' || *p == 'x' || *p == 'c') {
+            string_arg = p;
+            return;
+          }
+        }
+      #endif
 
-  // Skip all spaces to get to the first argument, or null
-  while (*p == ' ') ++p;
+      // Get the code number - integer digits only
+      codenum = 0;
+      do {
+        codenum *= 10, codenum += *p++ - '0';
+      } while (NUMERIC(*p));
+
+      // Allow for decimal point in command
+      #if USE_GCODE_SUBCODES
+        if (*p == '.') {
+          p++;
+          while (NUMERIC(*p))
+            subcode *= 10, subcode += *p++ - '0';
+        }
+      #endif
+
+      // Skip all spaces to get to the first argument, or null
+      while (*p == ' ') ++p;
+
+      break;
+
+    default: return;
+  }
 
   // The command parameters (if any) start here, for sure!
 

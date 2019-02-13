@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 /**
  * tools.cpp
  *
- * Copyright (C) 2017 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  */
 
 #include "../../../MK4duo.h"
@@ -74,6 +74,13 @@
         // T0-Tnnn: Switch virtual tool by changing the index to the mix
         mixer.T(tmp_extruder);
       #endif
+
+    #elif ENABLED(PRUSA_MMU2)
+
+      UNUSED(fr_mm_s);
+      UNUSED(no_move);
+
+      mmu2.toolChange(tmp_extruder);
 
     #elif EXTRUDERS < 2
 

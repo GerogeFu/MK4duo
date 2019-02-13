@@ -2,7 +2,7 @@
 
 # MK4duo 3D Printer Firmware for all Atmel AVR boards and Arduino Due
 
-## Version 4.3.9 revision 10022019
+## Version 4.3.9 revision 13022019
 
 #### Please donate to support this project https://www.paypal.me/MagoKimbra
 
@@ -96,6 +96,7 @@ The new features are:
 * Added Text Menu to Nextion Display
 * Added Support USB FLASH DRIVE such as SD
 * Added Prompt support for Host
+* Added Prusa MMU2 support
 
 
 ## Credits

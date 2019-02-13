@@ -3,7 +3,7 @@
  *
  * Based on Marlin, Sprinter and grbl
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
- * Copyright (C) 2013 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
 /**
  * tcode.h
  *
- * Copyright (C) 2017 Alberto Cotronei @MagoKimbra
+ * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  */
 
 /**
- * T0-TN: Switch tool, usually switching extruders or CNC tools
+ * T0-T<n>: Switch tool, usually switching extruders or CNC tools
  *
  * For Extruders:
  *   F[units/min] Set the movement feedrate
@@ -35,6 +35,11 @@
  *
  * For CNC no other parameters are expected
  *
+ * For PRUSA_MMU2:
+ *   T[n] Gcode to extrude at least 38.10 mm at feedrate 19.02 mm/s must follow immediately to load to extruder wheels.
+ *   T?   Gcode to extrude shouldn't have to follow. Load to extruder wheels is done automatically.
+ *   Tx   Same as T?, but nozzle doesn't have to be preheated. Tc requires a preheated nozzle to finish filament load.
+ *   Tc   Load to nozzle after filament was prepared by Tc and nozzle is already heated.
  */
 inline void gcode_T(const uint8_t tool_id) {
 
@@ -63,6 +68,13 @@ inline void gcode_T(const uint8_t tool_id) {
 
   #endif
 
+  #if HAS_MMU2
+    if (parser.string_arg) {
+      mmu2.toolChange(parser.string_arg);   // Special commands T?/Tx/Tc
+      return;
+    }
+  #endif
+
   #if EXTRUDERS == 1 && ENABLED(ADVANCED_PAUSE_FEATURE)
 
     if (printer.mode == PRINTER_MODE_FFF && printer.isPrinting() && tools.previous_extruder != tool_id) {
@@ -77,7 +89,7 @@ inline void gcode_T(const uint8_t tool_id) {
   #elif EXTRUDERS > 1 && HOTENDS > 1
 
     if (printer.mode == PRINTER_MODE_FFF) {
-        tools.change(
+      tools.change(
         tool_id,
         MMM_TO_MMS(parser.linearval('F')),
         (tool_id == tools.active_extruder) || parser.boolval('S')
