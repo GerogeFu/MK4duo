@@ -859,22 +859,49 @@ void Printer::handle_interrupt_events() {
   if (interruptEvent == INTERRUPT_EVENT_NONE) return; // Exit if none Event
 
   switch(interruptEvent) {
+
     #if HAS_FILAMENT_SENSOR
-      case INTERRUPT_EVENT_FIL_RUNOUT:
+
+      case INTERRUPT_EVENT_FIL_RUNOUT: {
+
+        #if ENABLED(ADVANCED_PAUSE_FEATURE)
+          if (advancedpause.did_pause_print) return;
+        #endif
+
+        const char tool = '0' + tools.active_extruder;
+
         filamentrunout.setFilamentOut(true);
-        host_action.prompt_reason = PROMPT_FILAMENT_RUNOUT_TRIPPED;
+        host_action.prompt_reason = PROMPT_FILAMENT_RUNOUT;
         host_action.prompt_begin(PSTR("Filament Runout T"), false);
-        SERIAL_EV(int(tools.active_extruder));
+        SERIAL_CHR(tool);
+        SERIAL_EOL();
         host_action.prompt_show();
 
-        if (filamentrunout.isHostHandling()
-          host_action.paused();
+        const bool run_runout_script = !filamentrunout.isHostHandling();
+
+        if (run_runout_script
+          && ( strstr(FILAMENT_RUNOUT_SCRIPT, "M600")
+            || strstr(FILAMENT_RUNOUT_SCRIPT, "M125")
+            #if ENABLED(ADVANCED_PAUSE_FEATURE)
+              || strstr(FILAMENT_RUNOUT_SCRIPT, "M25")
+            #endif
+          )
+        )
+          host_action.paused(false);
         else
+          host_action.pause(false);
+
+        SERIAL_SM(ECHO, "filament runout T");
+        SERIAL_CHR(tool);
+        SERIAL_EOL();
+
+        if (run_runout_script)
           commands.enqueue_and_echo_P(PSTR(FILAMENT_RUNOUT_SCRIPT));
 
-        planner.synchronize();
         break;
-    #endif
+      }
+
+    #endif // HAS_FILAMENT_SENSOR
 
     default: break;
 
