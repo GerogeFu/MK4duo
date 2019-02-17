@@ -183,7 +183,7 @@
               if (printer.debugFeature()) DEBUG_POS("Move back", mechanics.destination);
             #endif
             // Move back to the original (or tweaked) position
-            mechanics.do_blocking_move_to(mechanics.destination[X_AXIS], mechanics.destination[Y_AXIS], mechanics.destination[Z_AXIS]);
+            mechanics.do_blocking_move_to(mechanics.destination);
             #if ENABLED(DUAL_X_CARRIAGE)
               mechanics.active_extruder_parked = false;
             #endif

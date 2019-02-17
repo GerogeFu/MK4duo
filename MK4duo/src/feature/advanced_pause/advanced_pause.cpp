@@ -48,9 +48,9 @@ advanced_pause_data_t AdvancedPause::data[EXTRUDERS];
 uint8_t AdvancedPause::did_pause_print = 0;
 
 /** Public Function */
-void AdvancedPause::do_pause_e_move(const float &length, const float &fr) {
+void AdvancedPause::do_pause_e_move(const float &length, const float &fr_mm_s) {
   mechanics.current_position[E_AXIS] += length / tools.e_factor[tools.active_extruder];
-  planner.buffer_line(mechanics.current_position, fr, tools.active_extruder);
+  planner.buffer_line(mechanics.current_position, fr_mm_s, tools.active_extruder);
   planner.synchronize();
 }
 

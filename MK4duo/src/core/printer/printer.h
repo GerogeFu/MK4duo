@@ -115,7 +115,6 @@ class Printer {
 
     #if HAS_CHDK
       static watch_t chdk_watch;
-      static bool chdkActive;
     #endif
 
   private: /** Private Parameters */

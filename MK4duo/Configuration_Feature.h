@@ -84,8 +84,7 @@
  * - LCD Character Set
  * - LCD / Controller Selection
  * - LCD Options
- * - Canon RC-1 Remote
- * - Camera trigger
+ * - Photo G-code
  * - RFID card reader
  * - BLINKM
  * - RGB LED
@@ -1833,16 +1832,32 @@
 
 
 /**************************************************************************
- *************************** Canon RC-1 Remote ****************************
+ ***************************** Photo G-code *******************************
  **************************************************************************
  *                                                                        *
- * M240 Triggers a camera by emulating a Canon RC-1 Remote                *
- * Data from: http://www.doc-diy.net/photo/rc-1_hacked/                   *
+ * Add the M240 G-code to take a photo.                                   *
+ * The photo can be triggered by a digital pin or a physical movement.    *
  *                                                                        *
+ * Canon RC-1 or homebrew digital camera trigger                          *
+ * Data from: http://www.doc-diy.net/photo/rc-1_hacked/                   *
  * You also need to set PHOTOGRAPH_PIN in Configuration_pins.h            *
  *                                                                        *
+ * Canon Hack Development Kit                                             *
+ * http://captain-slow.dk/2014/03/09/3d-printing-timelapses/              *
+ * You also need to set CHDK_PIN in Configuration_pins.h                  *
+ *                                                                        *
  **************************************************************************/
-//#define PHOTOGRAPH
+//#define PHOTO_GCODE
+// A position to move to (and raise Z) before taking the photo
+//#define PHOTO_POSITION { X_MAX_POS - 5, Y_MAX_POS, 0 }  // { xpos, ypos, zraise } (M240 X Y Z)
+//#define PHOTO_DELAY_MS   100                            // (ms) Duration to pause before moving back (M240 P)
+//#define PHOTO_RETRACT_MM   6.5                          // (mm) E retract/recover for the photo move (M240 R S)
+
+// Optional second move with delay to trigger the camera shutter
+//#define PHOTO_SWITCH_POSITION { X_MAX_POS, Y_MAX_POS }  // { xpos, ypos } (M240 I J)
+
+// Duration to hold the switch or keep CHDK_PIN high
+#define PHOTO_SWITCH_MS   50 // (ms) (M240 D)
 /**************************************************************************/
 
 

@@ -91,8 +91,7 @@ PrinterModeEnum Printer::mode =
 #endif
 
 #if HAS_CHDK
-  watch_t Printer::chdk_watch(CHDK_DELAY);
-  bool    Printer::chdkActive = false;
+  watch_t Printer::chdk_watch(PHOTO_SWITCH_MS);
 #endif
 
 /** Public Function */
@@ -659,9 +658,9 @@ void Printer::idle(const bool ignore_stepper_queue/*=false*/) {
     }
   }
 
-  #if HAS_CHDK // Check if pin should be set to LOW after M240 set it to HIGH
-    if (chdkActive && chdk_watch.elapsed()) {
-      chdkActive = false;
+  #if HAS_CHDK // Check if pin should be set to LOW (after M240 set it HIGH)
+    if (chdk_watch.isRunning() && chdk_watch.elapsed()) {
+      chdk_watch.stop();
       WRITE(CHDK_PIN, LOW);
     }
   #endif

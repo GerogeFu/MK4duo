@@ -54,7 +54,7 @@
 
     #if ENABLED(NOZZLE_CLEAN_GOBACK)
       // Move the nozzle to the initial point
-      mechanics.do_blocking_move_to(initial[X_AXIS], initial[Y_AXIS], initial[Z_AXIS]);
+      mechanics.do_blocking_move_to(initial);
     #endif
   }
 
@@ -110,7 +110,7 @@
 
     #if ENABLED(NOZZLE_CLEAN_GOBACK)
       // Move the nozzle to the initial point
-      mechanics.do_blocking_move_to(initial[X_AXIS], initial[Y_AXIS], initial[Z_AXIS]);
+      mechanics.do_blocking_move_to(initial);
     #endif
   }
 
