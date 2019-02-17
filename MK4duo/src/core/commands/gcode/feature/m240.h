@@ -99,8 +99,8 @@ inline void gcode_M240(void) {
 
     constexpr float photo_position[XYZ] = PHOTO_POSITION;
     float raw[XYZ] = {
-       parser.seenval('X') ? RAW_X_POSITION(parser.value_linear_units()) : photo_position[X_AXIS],
-       parser.seenval('Y') ? RAW_Y_POSITION(parser.value_linear_units()) : photo_position[Y_AXIS],
+       parser.seenval('X') ? NATIVE_X_POSITION(parser.value_linear_units()) : photo_position[X_AXIS],
+       parser.seenval('Y') ? NATIVE_Y_POSITION(parser.value_linear_units()) : photo_position[Y_AXIS],
       (parser.seenval('Z') ? parser.value_linear_units() : photo_position[Z_AXIS]) + mechanics.current_position[Z_AXIS]
     };
     endstops.clamp_to_software(raw);
@@ -109,8 +109,8 @@ inline void gcode_M240(void) {
     #if ENABLED(PHOTO_SWITCH_POSITION)
       constexpr float photo_switch_position[2] = PHOTO_SWITCH_POSITION;
       const float sraw[] = {
-         parser.seenval('I') ? RAW_X_POSITION(parser.value_linear_units()) : photo_switch_position[X_AXIS],
-         parser.seenval('J') ? RAW_Y_POSITION(parser.value_linear_units()) : photo_switch_position[Y_AXIS]
+         parser.seenval('I') ? NATIVE_X_POSITION(parser.value_linear_units()) : photo_switch_position[X_AXIS],
+         parser.seenval('J') ? NATIVE_Y_POSITION(parser.value_linear_units()) : photo_switch_position[Y_AXIS]
       };
       mechanics.do_blocking_move_to_xy(sraw[X_AXIS], sraw[Y_AXIS], get_homing_bump_feedrate(X_AXIS));
       #if PHOTO_SWITCH_MS > 0

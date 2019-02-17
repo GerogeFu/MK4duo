@@ -28,59 +28,59 @@
 
 #if ENABLED(PARK_HEAD_ON_PAUSE)
 
-  #define CODE_M125
+#define CODE_M125
 
-  /**
-   * M125: Store current position and move to pause park position.
-   *       Called on pause (by M25) to prevent material leaking onto the
-   *       object. On resume (M24) the head will be moved back and the
-   *       print will resume.
-   *
-   *       When not actively SD printing, M125 simply moves to the park
-   *       position and waits, resuming with a button click or M108.
-   *       Without PARK_HEAD_ON_PAUSE the M125 command does nothing.
-   *
-   *    L = override retract length
-   *    X = override X
-   *    Y = override Y
-   *    Z = override Z raise
-   */
-  inline void gcode_M125(void) {
+/**
+ * M125: Store current position and move to pause park position.
+ *       Called on pause (by M25) to prevent material leaking onto the
+ *       object. On resume (M24) the head will be moved back and the
+ *       print will resume.
+ *
+ *       When not actively SD printing, M125 simply moves to the park
+ *       position and waits, resuming with a button click or M108.
+ *       Without PARK_HEAD_ON_PAUSE the M125 command does nothing.
+ *
+ *    L = override retract length
+ *    X = override X
+ *    Y = override Y
+ *    Z = override Z raise
+ */
+inline void gcode_M125(void) {
 
-    // Initial retract before move to pause park position
-    const float retract = -ABS(parser.seen('L') ? parser.value_axis_units(E_AXIS) : 0
-      #if ENABLED(PAUSE_PARK_RETRACT_LENGTH) && PAUSE_PARK_RETRACT_LENGTH > 0
-        + (PAUSE_PARK_RETRACT_LENGTH)
-      #endif
-    );
-
-    point_t park_point = NOZZLE_PARK_POINT;
-
-    // Move XY axes to filament change position or given position
-    if (parser.seenval('X')) park_point.x = parser.linearval('X');
-    if (parser.seenval('Y')) park_point.y = parser.linearval('Y');
-
-    // Lift Z axis
-    if (parser.seenval('Z')) park_point.z = parser.linearval('Z');
-
-    #if HOTENDS > 1 && DISABLED(DUAL_X_CARRIAGE)
-      park_point.x += (tools.active_extruder ? tools.hotend_offset[X_AXIS][tools.active_extruder] : 0);
-      park_point.y += (tools.active_extruder ? tools.hotend_offset[Y_AXIS][tools.active_extruder] : 0);
+  // Initial retract before move to pause park position
+  const float retract = -ABS(parser.seen('L') ? parser.value_axis_units(E_AXIS) : 0
+    #if ENABLED(PAUSE_PARK_RETRACT_LENGTH) && PAUSE_PARK_RETRACT_LENGTH > 0
+      + (PAUSE_PARK_RETRACT_LENGTH)
     #endif
+  );
 
-    #if HAS_LCD_MENU
-      lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_INIT, ADVANCED_PAUSE_MODE_PAUSE_PRINT);
-      const bool show_lcd = parser.seenval('P');
-    #else
-      constexpr bool show_lcd = false;
-    #endif
-  
-    if (advancedpause.pause_print(retract, park_point, 0, show_lcd)) {
-      if (!IS_SD_PRINTING() || show_lcd ) {
-        advancedpause.wait_for_confirmation(false, 0);
-        advancedpause.resume_print(0, 0, PAUSE_PARK_RETRACT_LENGTH, 0);
-      }
+  point_t park_point = NOZZLE_PARK_POINT;
+
+  // Move XY axes to filament change position or given position
+  if (parser.seenval('X')) park_point.x = NATIVE_X_POSITION(parser.linearval('X'));
+  if (parser.seenval('Y')) park_point.y = NATIVE_Y_POSITION(parser.linearval('Y'));
+
+  // Lift Z axis
+  if (parser.seenval('Z')) park_point.z = parser.linearval('Z');
+
+  #if HOTENDS > 1 && DISABLED(DUAL_X_CARRIAGE) && NOMECH(DELTA)
+    park_point.x += (tools.active_extruder ? tools.hotend_offset[X_AXIS][tools.active_extruder] : 0);
+    park_point.y += (tools.active_extruder ? tools.hotend_offset[Y_AXIS][tools.active_extruder] : 0);
+  #endif
+
+  #if HAS_LCD_MENU
+    lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_INIT, ADVANCED_PAUSE_MODE_PAUSE_PRINT);
+    const bool show_lcd = parser.seenval('P');
+  #else
+    constexpr bool show_lcd = false;
+  #endif
+
+  if (advancedpause.pause_print(retract, park_point, 0, show_lcd)) {
+    if (!IS_SD_PRINTING() || show_lcd ) {
+      advancedpause.wait_for_confirmation(false, 0);
+      advancedpause.resume_print(0, 0, PAUSE_PARK_RETRACT_LENGTH, 0);
     }
   }
+}
 
 #endif // ENABLED(PARK_HEAD_ON_PAUSE)
