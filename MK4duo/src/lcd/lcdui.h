@@ -155,7 +155,7 @@ class LcdUI {
       #if ENABLED(REPRAPWORLD_KEYPAD)
         static volatile uint8_t keypad_buttons;
       #endif
-      #if ENABLED(LCD_HAS_SLOW_BUTTONS)
+      #if HAS_SLOW_BUTTONS
         static volatile uint8_t slow_buttons;
       #endif
 
@@ -335,7 +335,7 @@ class LcdUI {
       #if ENABLED(REPRAPWORLD_KEYPAD)
         static bool handle_keypad();
       #endif
-      #if ENABLED(LCD_HAS_SLOW_BUTTONS)
+      #if HAS_SLOW_BUTTONS
         static uint8_t read_slow_buttons();
       #endif
       static void update_buttons();

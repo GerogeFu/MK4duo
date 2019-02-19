@@ -49,6 +49,9 @@ uint8_t AdvancedPause::did_pause_print = 0;
 
 /** Public Function */
 void AdvancedPause::do_pause_e_move(const float &length, const float &fr_mm_s) {
+  #if HAS_FILAMENT_SENSOR
+    filamentrunout.reset();
+  #endif
   mechanics.current_position[E_AXIS] += length / tools.e_factor[tools.active_extruder];
   planner.buffer_line(mechanics.current_position, fr_mm_s, tools.active_extruder);
   planner.synchronize();
@@ -376,6 +379,11 @@ bool AdvancedPause::load_filament(const float &slow_load_length/*=0*/, const flo
                    const AdvancedPauseModeEnum mode/*=ADVANCED_PAUSE_MODE_PAUSE_PRINT*/
                    DXC_ARGS
 ) {
+
+  #if !HAS_LCD_MENU
+    UNUSED(show_lcd);
+  #endif
+
   if (!ensure_safe_temperature(mode)) {
     #if HAS_LCD_MENU
       if (show_lcd) lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_STATUS, mode);
@@ -398,9 +406,11 @@ bool AdvancedPause::load_filament(const float &slow_load_length/*=0*/, const flo
     printer.keepalive(PausedforUser);
     printer.setWaitForUser(true);    // LCD click or M108 will clear this
 
+    const char tool = '0' + tools.active_extruder;
+
     host_action.prompt_reason = PROMPT_USER_CONTINUE;
     host_action.prompt_begin(PSTR("Load Filament T"), false);
-    SERIAL_VAL(tools.active_extruder);
+    SERIAL_CHR(tool);
     SERIAL_EOL();
     host_action.prompt_button(PSTR("Continue"));
     host_action.prompt_show();
@@ -416,8 +426,6 @@ bool AdvancedPause::load_filament(const float &slow_load_length/*=0*/, const flo
 
   #if HAS_LCD_MENU
     if (show_lcd) lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_LOAD, mode);
-  #else
-    UNUSED(show_lcd);
   #endif
 
   #if ENABLED(DUAL_X_CARRIAGE)
@@ -465,6 +473,7 @@ bool AdvancedPause::load_filament(const float &slow_load_length/*=0*/, const flo
       host_action.prompt_button(PSTR("Continue"));
     }
     host_action.prompt_show();
+
     #if HAS_LCD_MENU
       if (show_lcd) {
         printer.keepalive(PausedforUser);
@@ -478,7 +487,7 @@ bool AdvancedPause::load_filament(const float &slow_load_length/*=0*/, const flo
     // Keep looping if "Purge More" was selected
   } while (false
     #if HAS_LCD
-      && show_lcd && menu_response == ADVANCED_PAUSE_RESPONSE_EXTRUDE_MORE
+      && (show_lcd && menu_response == ADVANCED_PAUSE_RESPONSE_EXTRUDE_MORE)
     #endif
   );
 
@@ -498,6 +507,11 @@ bool AdvancedPause::load_filament(const float &slow_load_length/*=0*/, const flo
 bool AdvancedPause::unload_filament(const float &unload_length, const bool show_lcd/*=false*/,
                                     const AdvancedPauseModeEnum mode/*=ADVANCED_PAUSE_MODE_PAUSE_PRINT*/
 ) {
+
+  #if !HAS_LCD_MENU
+    UNUSED(show_lcd);
+  #endif
+
   if (!ensure_safe_temperature(mode)) {
     #if HAS_LCD_MENU
       if (show_lcd) lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_STATUS);
@@ -508,8 +522,6 @@ bool AdvancedPause::unload_filament(const float &unload_length, const bool show_
 
   #if HAS_LCD_MENU
     if (show_lcd) lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_UNLOAD, mode);
-  #else
-    UNUSED(show_lcd);
   #endif
 
   // Retract filament
@@ -522,7 +534,7 @@ bool AdvancedPause::unload_filament(const float &unload_length, const bool show_
   do_pause_e_move(FILAMENT_UNLOAD_RETRACT_LENGTH + FILAMENT_UNLOAD_PURGE_LENGTH, mechanics.data.max_feedrate_mm_s[E_AXIS]);
 
   // Unload filament
-  do_pause_e_move(-unload_length, PAUSE_PARK_UNLOAD_FEEDRATE);
+  do_pause_e_move(unload_length, PAUSE_PARK_UNLOAD_FEEDRATE);
 
   // Disable extruders steppers for manual filament changing
   #if E0_ENABLE_PIN != X_ENABLE_PIN && E1_ENABLE_PIN != Y_ENABLE_PIN

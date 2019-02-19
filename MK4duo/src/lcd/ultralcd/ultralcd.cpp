@@ -52,7 +52,7 @@ LcdUI lcdui;
 
 #if HAS_ENCODER_ACTION
   volatile uint8_t LcdUI::buttons;
-  #if ENABLED(LCD_HAS_SLOW_BUTTONS)
+  #if HAS_SLOW_BUTTONS
     volatile uint8_t LcdUI::slow_buttons;
   #endif
 #endif
@@ -217,7 +217,7 @@ void LcdUI::init() {
     lcd_sd_status = 2; // UNKNOWN
   #endif
 
-  #if HAS_ENCODER_ACTION && ENABLED(LCD_HAS_SLOW_BUTTONS)
+  #if HAS_ENCODER_ACTION && HAS_SLOW_BUTTONS
     slow_buttons = 0;
   #endif
 
@@ -680,7 +680,7 @@ void LcdUI::update() {
 
     #if HAS_ENCODER_ACTION
 
-      #if ENABLED(LCD_HAS_SLOW_BUTTONS)
+      #if HAS_SLOW_BUTTONS
         slow_buttons = read_slow_buttons(); // Buttons that take too long to read in interrupt context
       #endif
 
