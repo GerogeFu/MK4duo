@@ -153,7 +153,7 @@
   }
 
   void Laser::set_mode(uint8_t mode) {
-    switch(mode) {
+    switch (mode) {
       case 0:
         laser.mode = CONTINUOUS;
         return;

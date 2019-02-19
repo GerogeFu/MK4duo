@@ -68,7 +68,7 @@ void Sound::spin() {
 }
 
 void Sound::cycleState() {
-  switch(mode) {
+  switch (mode) {
     case SOUND_MODE_ON:
       mode = SOUND_MODE_SILENT;
       break;

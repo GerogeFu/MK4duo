@@ -511,7 +511,7 @@ void Printer::minikill() {
   #endif
 
   // Wait for reset
-  while(1) { watchdog.reset(); }
+  for (;;) watchdog.reset();
 
 }
 
@@ -745,7 +745,7 @@ void Printer::idle(const bool ignore_stepper_queue/*=false*/) {
       #if ENABLED(DONDOLO_SINGLE_MOTOR)
         E0_ENABLE_WRITE(oldstatus);
       #else
-        switch(tools.active_extruder) {
+        switch (tools.active_extruder) {
           case 0: E0_ENABLE_WRITE(oldstatus); break;
           #if DRIVER_EXTRUDERS > 1
             case 1: E1_ENABLE_WRITE(oldstatus); break;
@@ -857,7 +857,7 @@ void Printer::handle_interrupt_events() {
 
   if (interruptEvent == INTERRUPT_EVENT_NONE) return; // Exit if none Event
 
-  switch(interruptEvent) {
+  switch (interruptEvent) {
 
     #if HAS_FILAMENT_SENSOR
 

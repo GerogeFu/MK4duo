@@ -201,7 +201,7 @@
         bedlevel.reset();
         break;
 
-    } // switch(state)
+    } // switch (state)
 
     if (state == MeshNext) {
       SERIAL_MV("MBL G29 point ", MIN(mbl_probe_index, GRID_MAX_POINTS));

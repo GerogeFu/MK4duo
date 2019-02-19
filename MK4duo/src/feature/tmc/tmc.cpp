@@ -764,7 +764,7 @@ void TMC_Stepper::test_connection(const bool test_x, const bool test_y, const bo
 
 MKTMC* TMC_Stepper::driver_by_index(const uint8_t index) {
 
-  switch(index) {
+  switch (index) {
     #if AXIS_HAS_TMC(X)
       case 0: return stepperX; break;
     #endif
@@ -1143,7 +1143,7 @@ bool TMC_Stepper::test_connection(MKTMC* st) {
   #elif HAVE_DRV(TMC2130)
 
     void TMC_Stepper::status(MKTMC* st, const TMCdebugEnum i) {
-      switch(i) {
+      switch (i) {
         case TMC_PWM_SCALE: SERIAL_VAL(st->PWM_SCALE()); break;
         case TMC_SGT: SERIAL_VAL(st->sgt()); break;
         case TMC_STEALTHCHOP: SERIAL_PGM(st->en_pwm_mode() ? PSTR("true") : PSTR("false")); break;
@@ -1152,7 +1152,7 @@ bool TMC_Stepper::test_connection(MKTMC* st) {
     }
 
     void TMC_Stepper::parse_type_drv_status(MKTMC* st, const TMCdrvStatusEnum i) {
-      switch(i) {
+      switch (i) {
         case TMC_STALLGUARD: if (st->stallguard()) SERIAL_CHR('X');  break;
         case TMC_SG_RESULT:  SERIAL_VAL(st->sg_result());            break;
         case TMC_FSACTIVE:   if (st->fsactive())   SERIAL_CHR('X'); break;
@@ -1192,7 +1192,7 @@ bool TMC_Stepper::test_connection(MKTMC* st) {
   #elif HAVE_DRV(TMC2208)
 
     void TMC_Stepper::status(MKTMC* st, const TMCdebugEnum i) {
-      switch(i) {
+      switch (i) {
         case TMC_PWM_SCALE: SERIAL_VAL(st->pwm_scale_sum()); break;
         case TMC_STEALTHCHOP: SERIAL_PGM(st->stealth() ? PSTR("true") : PSTR("false")); break;
         case TMC_S2VSA: if (st->s2vsa()) SERIAL_CHR('X'); break;
@@ -1202,7 +1202,7 @@ bool TMC_Stepper::test_connection(MKTMC* st) {
     }
 
     void TMC_Stepper::parse_type_drv_status(MKTMC* st, const TMCdrvStatusEnum i) {
-      switch(i) {
+      switch (i) {
         case TMC_T157: if (st->t157()) SERIAL_CHR('X'); break;
         case TMC_T150: if (st->t150()) SERIAL_CHR('X'); break;
         case TMC_T143: if (st->t143()) SERIAL_CHR('X'); break;
@@ -1241,7 +1241,7 @@ bool TMC_Stepper::test_connection(MKTMC* st) {
   
     void TMC_Stepper::status(MKTMC* st, const TMCdebugEnum i, const float spmm) {
       SERIAL_CHR('\t');
-      switch(i) {
+      switch (i) {
         case TMC_CODES: st->printLabel(); break;
         case TMC_ENABLED: SERIAL_PGM(st->isEnabled() ? PSTR("true") : PSTR("false")); break;
         case TMC_CURRENT: SERIAL_VAL(st->getMilliamps()); break;
@@ -1266,7 +1266,7 @@ bool TMC_Stepper::test_connection(MKTMC* st) {
 
     void TMC_Stepper::status(MKTMC* st, const TMCdebugEnum i, const float spmm) {
       SERIAL_CHR('\t');
-      switch(i) {
+      switch (i) {
         case TMC_CODES: st->printLabel(); break;
         case TMC_ENABLED: SERIAL_PGM(st->isEnabled() ? PSTR("true") : PSTR("false")); break;
         case TMC_CURRENT: SERIAL_VAL(st->getMilliamps()); break;

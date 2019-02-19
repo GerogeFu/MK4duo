@@ -44,7 +44,7 @@
    *       S# determines MS1 or MS2, X# sets the pin high/low.
    */
   inline void gcode_M351(void) {
-    if (parser.seen('S')) switch(parser.value_byte()) {
+    if (parser.seen('S')) switch (parser.value_byte()) {
       case 1:
         LOOP_XYZE(i) if (parser.seen(axis_codes[i])) stepper.microstep_ms(i, parser.value_byte(), -1);
         if (parser.seen('B')) stepper.microstep_ms(4, parser.value_byte(), -1);

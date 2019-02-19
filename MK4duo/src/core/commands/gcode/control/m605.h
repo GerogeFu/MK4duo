@@ -74,7 +74,7 @@
         return;
       }
 
-      switch(mechanics.dual_x_carriage_mode) {
+      switch (mechanics.dual_x_carriage_mode) {
         case DXC_FULL_CONTROL_MODE:
         case DXC_AUTO_PARK_MODE:
           break;
@@ -99,7 +99,7 @@
 
       if (parser.seen('W')) {
         SERIAL_SM(ECHO, "DXC mode: ");
-        switch(mechanics.dual_x_carriage_mode) {
+        switch (mechanics.dual_x_carriage_mode) {
           case DXC_FULL_CONTROL_MODE:       SERIAL_MSG("DXC_FULL_CONTROL_MODE");        break;
           case DXC_AUTO_PARK_MODE:          SERIAL_MSG("DXC_AUTO_PARK_MODE");           break;
           case DXC_DUPLICATION_MODE:        SERIAL_MSG("DXC_DUPLICATION_MODE");         break;

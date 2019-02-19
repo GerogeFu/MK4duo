@@ -244,7 +244,7 @@
   #if ENABLED(EXT_SOLENOID)
 
     void Tools::enable_solenoid(const uint8_t e) {
-      switch(e) {
+      switch (e) {
         case 0:
           OUT_WRITE(SOL0_PIN, HIGH);
           break;
@@ -362,7 +362,7 @@
 
       #if (EXTRUDERS == 4) && HAS_E0E2 && HAS_E1E3 && (DRIVER_EXTRUDERS == 2)
 
-        switch(e) {
+        switch (e) {
           case 0:
             WRITE_RELE(E0E2_CHOICE_PIN, LOW);
             WRITE_RELE(E1E3_CHOICE_PIN, LOW);
@@ -391,7 +391,7 @@
 
       #elif (EXTRUDERS == 3) && HAS_E0E2 && (DRIVER_EXTRUDERS == 2)
 
-        switch(e) {
+        switch (e) {
           case 0:
             WRITE_RELE(E0E2_CHOICE_PIN, LOW);
             printer.safe_delay(500); // 500 microseconds delay for relay
@@ -411,7 +411,7 @@
 
       #elif (EXTRUDERS == 2) && HAS_E0E1 && (DRIVER_EXTRUDERS == 1)
 
-        switch(e) {
+        switch (e) {
           case 0:
             WRITE_RELE(E0E1_CHOICE_PIN, LOW);
             printer.safe_delay(500); // 500 microseconds delay for relay
@@ -440,7 +440,7 @@
 
       #if (EXTRUDERS == 2) && HAS_EX1 && (DRIVER_EXTRUDERS == 1)
 
-        switch(e) {
+        switch (e) {
           case 0:
             WRITE_RELE(EX1_CHOICE_PIN, LOW);
             printer.safe_delay(500); // 500 microseconds delay for relay
@@ -455,7 +455,7 @@
 
       #elif (EXTRUDERS == 3) && HAS_EX1 && HAS_EX2 && (DRIVER_EXTRUDERS == 1)
 
-        switch(e) {
+        switch (e) {
           case 0:
             WRITE_RELE(EX1_CHOICE_PIN, LOW);
             WRITE_RELE(EX2_CHOICE_PIN, LOW);
@@ -485,7 +485,7 @@
           multiply -= 3;
         }
 
-        switch(multiply) {
+        switch (multiply) {
           case 0:
             WRITE_RELE(EX1_CHOICE_PIN, LOW);
             WRITE_RELE(EX2_CHOICE_PIN, LOW);

@@ -102,7 +102,7 @@ void EmergencyParser::update(EmergencyStateEnum &state, const uint8_t c) {
       break;
 
     case EP_M876:
-      switch(c) {
+      switch (c) {
         case ' ':
           break;
         case 'S':

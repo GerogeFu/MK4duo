@@ -45,7 +45,7 @@
         mechanics.destination[X_AXIS] = mechanics.current_position[X_AXIS]; // Don't increment X axis
         mechanics.destination[Y_AXIS] = mechanics.current_position[Y_AXIS]; // Don't increment Y axis
       #else
-        switch(laser.raster_direction) {
+        switch (laser.raster_direction) {
           case 0:
           case 1:
           case 4:

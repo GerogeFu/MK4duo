@@ -970,7 +970,7 @@ void Delta_Mechanics::report_current_position_detail() {
     constexpr float perturb = 0.2;      // perturbation amount in mm or degrees
     float zHi, zLo, newPos[ABC];
 
-    switch(deriv) {
+    switch (deriv) {
       case 0:
       case 1:
       case 2:

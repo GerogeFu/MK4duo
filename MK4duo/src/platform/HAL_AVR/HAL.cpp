@@ -301,7 +301,7 @@ void HAL::hwSetup() { /*nope*/ }
 
 void HAL::setPwmFrequency(const pin_t pin, uint8_t val) {
   val &= 0x07;
-  switch(digitalPinToTimer(pin)) {
+  switch (digitalPinToTimer(pin)) {
 
     #if ENABLED(TCCR0A)
       case TIMER0A:

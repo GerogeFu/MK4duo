@@ -43,7 +43,7 @@ inline void gcode_M226(void) {
       planner.synchronize();
 
       HAL::pinMode(pin_number, INPUT);
-      switch(pin_state) {
+      switch (pin_state) {
         case 1:
           target = HIGH;
           break;

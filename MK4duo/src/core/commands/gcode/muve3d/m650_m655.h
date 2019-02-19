@@ -106,7 +106,7 @@
     if (parser.seen('V')) {
       int tempVal = parser.value_int();
 
-      switch(tempVal) {
+      switch (tempVal) {
         // Power Off
         case 0: {
           // 0614000400341101005E

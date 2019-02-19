@@ -350,7 +350,7 @@ void menu_configuration() {
 
   #if DISABLED(SLIM_LCD_MENUS)
 
-    switch(sound.mode) {
+    switch (sound.mode) {
       case SOUND_MODE_ON:
         MENU_ITEM(function, MSG_SOUND_MODE_ON, sound.cycleState);
         break;

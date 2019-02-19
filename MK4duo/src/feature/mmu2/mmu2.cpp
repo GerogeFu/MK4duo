@@ -545,7 +545,7 @@ void MMU2::toolChange(const char* special) {
     set_runout_valid(false);
     printer.keepalive(InHandler);
 
-    switch(*special) {
+    switch (*special) {
       case '?': {
         uint8_t index = mmu2_chooseFilament();
         while (!heaters[0].wait_for_heating()) printer.safe_delay(100);

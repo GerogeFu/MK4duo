@@ -1236,7 +1236,7 @@ bool Planner::fill_block(block_t * const block, bool split_move,
         for (uint8_t i = 0; i < EXTRUDERS; i++)
           if (g_uc_extruder_last_move[i] > 0) g_uc_extruder_last_move[i]--;
 
-        switch(extruder) {
+        switch (extruder) {
           case 0:
             #if EXTRUDERS > 1
               if (!g_uc_extruder_last_move[1]) stepper.disable_E1();
@@ -1342,7 +1342,7 @@ bool Planner::fill_block(block_t * const block, bool split_move,
         stepper.enable_E();
       #endif
     #elif ENABLED(MKR6)
-      switch(extruder) {
+      switch (extruder) {
         case 0:
         case 1:
         case 2:
@@ -1355,7 +1355,7 @@ bool Planner::fill_block(block_t * const block, bool split_move,
           break;
       }
     #elif ENABLED(MKR12)
-      switch(extruder) {
+      switch (extruder) {
         case 0:
         case 1:
         case 2:
@@ -1380,7 +1380,7 @@ bool Planner::fill_block(block_t * const block, bool split_move,
     #elif ENABLED(MKR4) && (EXTRUDERS == 2) && (DRIVER_EXTRUDERS == 1)
       stepper.enable_E0();
     #elif ENABLED(MKR4)
-      switch(extruder) {
+      switch (extruder) {
         case 0:
           stepper.enable_E0();
         break;
