@@ -19,6 +19,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 /**
  * Configuration_Pins.h
@@ -26,9 +27,6 @@
  * This configuration file contains all Pins.
  *
  */
-
-#ifndef _CONFIGURATION_PINS_H_
-#define _CONFIGURATION_PINS_H_
 
 //=================================== BASIC ==================================
 
@@ -303,5 +301,3 @@
 #endif
 
 //============================================================================
-
-#endif /* _CONFIGURATION_PINS_H_ */

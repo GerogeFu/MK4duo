@@ -155,8 +155,12 @@
  *  - TMC26X_STANDALONE                                                     *
  *  - TMC2660                                                               *
  *  - TMC2660_STANDALONE                                                    *
+ *  - TMC2160                                                               *
+ *  - TMC2160_STANDALONE                                                    *
  *  - TMC5130                                                               *
  *  - TMC5130_STANDALONE                                                    *
+ *  - TMC5160                                                               *
+ *  - TMC5160_STANDALONE                                                    *
  *                                                                          *
  * See Configuration_Motor_Driver.h for configuration Motor Driver          *
  *                                                                          *

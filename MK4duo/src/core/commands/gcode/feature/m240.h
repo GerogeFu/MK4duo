@@ -62,6 +62,9 @@
  *                            configured position, delay, and retract length.
  *
  * PHOTO_POSITION parameters:
+ *    A - X offset to the return position
+ *    B - Y offset to the return position
+ *    F - Override the XY movement feedrate
  *    R - Retract/recover length (current units)
  *    S - Retract/recover feedrate (mm/m)
  *    X - Move to X before triggering the shutter
@@ -78,9 +81,12 @@ inline void gcode_M240(void) {
 
   #if ENABLED(PHOTO_POSITION)
 
-    if (!printer.isHomedAll()) return;
+    if (!mechanics.isHomedAll()) return;
 
-    const float old_pos[XYZ] = { mechanics.current_position[X_AXIS], mechanics.current_position[Y_AXIS], mechanics.current_position[Z_AXIS] };
+    mechanics.stored_position[1][X_AXIS] = mechanics.current_position[X_AXIS] + parser.linearval('A');
+    mechanics.stored_position[1][Y_AXIS] = mechanics.current_position[Y_AXIS] + parser.linearval('B');
+    mechanics.stored_position[1][Z_AXIS] = mechanics.current_position[Z_AXIS];
+    mechanics.stored_position[1][E_AXIS] = mechanics.current_position[E_AXIS];
 
     #if ENABLED(PHOTO_RETRACT_MM)
       constexpr float rfr = (MMS_TO_MMM(
@@ -97,6 +103,9 @@ inline void gcode_M240(void) {
       e_move_m240(-rval, sval);
     #endif
 
+    float fr_mm_s = MMM_TO_MMS(parser.linearval('F'));
+    if (fr_mm_s) NOLESS(fr_mm_s, 10.0f);
+
     constexpr float photo_position[XYZ] = PHOTO_POSITION;
     float raw[XYZ] = {
        parser.seenval('X') ? NATIVE_X_POSITION(parser.value_linear_units()) : photo_position[X_AXIS],
@@ -104,7 +113,7 @@ inline void gcode_M240(void) {
       (parser.seenval('Z') ? parser.value_linear_units() : photo_position[Z_AXIS]) + mechanics.current_position[Z_AXIS]
     };
     endstops.clamp_to_software(raw);
-    mechanics.do_blocking_move_to(raw);
+    mechanics.do_blocking_move_to(raw, fr_mm_s);
 
     #if ENABLED(PHOTO_SWITCH_POSITION)
       constexpr float photo_switch_position[2] = PHOTO_SWITCH_POSITION;
@@ -112,7 +121,7 @@ inline void gcode_M240(void) {
          parser.seenval('I') ? NATIVE_X_POSITION(parser.value_linear_units()) : photo_switch_position[X_AXIS],
          parser.seenval('J') ? NATIVE_Y_POSITION(parser.value_linear_units()) : photo_switch_position[Y_AXIS]
       };
-      mechanics.do_blocking_move_to_xy(sraw[X_AXIS], sraw[Y_AXIS], get_homing_bump_feedrate(X_AXIS));
+      mechanics.do_blocking_move_to_xy(sraw[X_AXIS], sraw[Y_AXIS], mechanics.homing_feedrate_mm_s[X_AXIS] / 2);
       #if PHOTO_SWITCH_MS > 0
         printer.safe_delay(parser.intval('D', PHOTO_SWITCH_MS));
       #endif
@@ -138,7 +147,7 @@ inline void gcode_M240(void) {
     #if PHOTO_DELAY_MS > 0
       printer.safe_delay(parser.intval('P', PHOTO_DELAY_MS));
     #endif
-    mechanics.do_blocking_move_to(old_pos);
+    mechanics.do_blocking_move_to(mechanics.stored_position[1], fr_mm_s);
     #if ENABLED(PHOTO_RETRACT_MM)
       e_move_m240(rval, sval);
     #endif

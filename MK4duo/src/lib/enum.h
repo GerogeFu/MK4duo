@@ -312,6 +312,7 @@ enum TMCdebugEnum : char {
   TMC_MAX_CURRENT,
   TMC_IRUN,
   TMC_IHOLD,
+  TMC_GLOBAL_SCALER,
   TMC_CS_ACTUAL,
   TMC_PWM_SCALE,
   TMC_VSENSE,
@@ -326,8 +327,7 @@ enum TMCdebugEnum : char {
   TMC_TBL,
   TMC_HEND,
   TMC_HSTRT,
-  TMC_SGT,
-  TMC_NULL
+  TMC_SGT
 };
 enum TMCdrvStatusEnum : char {
   TMC_DRV_CODES,

@@ -579,10 +579,10 @@ class HAL {
       static void spiBegin();
       static void spiInit(uint8_t spiRate);
       // Write single byte to SPI
-      static void spiSend(byte b);
+      static void spiSend(uint8_t b);
       static void spiSend(const uint8_t* buf, size_t n);
       // Read single byte from SPI
-      static uint8_t spiReceive(uint8_t send=0xFF);
+      static uint8_t spiReceive(void);
       // Read from SPI into buffer
       static void spiReadBlock(uint8_t* buf, uint16_t nbyte);
       // Write from buffer to SPI

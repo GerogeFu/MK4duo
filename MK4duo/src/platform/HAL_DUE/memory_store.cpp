@@ -79,6 +79,7 @@ bool MemoryStore::write_data(int &pos, const uint8_t *value, size_t size, uint16
       // so only write bytes that have changed!
       if (v != eeprom_read_byte(p)) {
         eeprom_write_byte(p, v);
+        delay(2);
         if (eeprom_read_byte(p) != v) {
           SERIAL_LM(ECHO, MSG_ERR_EEPROM_WRITE);
           return true;

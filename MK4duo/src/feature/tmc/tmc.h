@@ -31,7 +31,7 @@
 
 #include <TMCStepper.h>
 
-#if TMCSTEPPER_VERSION < 0x000300
+#if TMCSTEPPER_VERSION < 0x000301
   #error "Update TMCStepper library to 0.3.1 or newer."
 #endif
 
@@ -52,6 +52,31 @@
 #define TMC_E5_LABEL "E5", 8
 
 #define TMC_AXIS 13
+
+#if ENABLED(MONITOR_DRIVER_STATUS) && DISABLED(MONITOR_DRIVER_STATUS_INTERVAL_MS)
+  #define MONITOR_DRIVER_STATUS_INTERVAL_MS 500u
+#endif
+
+struct TMC_driver_data {
+  uint32_t  drv_status;
+  bool      is_otpw:  1,
+            is_ot:    1,
+            is_s2g:   1,
+            is_error: 1
+            #if ENABLED(TMC_DEBUG)
+              , is_stall:             1
+              , is_stealth:           1
+              , is_standstill:        1
+              , sg_result_reasonable: 1
+            #endif
+      ;
+  #if ENABLED(TMC_DEBUG)
+    #if HAS_TMCX1X0 || HAVE_DRV(TMC2208)
+      uint8_t cs_actual;
+    #endif
+    uint16_t sg_result;
+  #endif
+};
 
 typedef struct {
   uint8_t toff;
@@ -324,15 +349,6 @@ class TMCStorage {
   extern MKTMC* stepperE5;
 #endif
 
-struct TMC_driver_data {
-  uint32_t  drv_status;
-  bool  is_otpw,
-        is_ot,
-        is_s2ga,
-        is_s2gb,
-        is_error;
-};
-
 class TMC_Stepper {
 
   public: /** Constructor */
@@ -343,7 +359,7 @@ class TMC_Stepper {
 
   private: /** Private Parameters */
 
-    static bool report_status;
+    static uint16_t report_status_interval;
 
   public: /** Public Function */
 
@@ -367,7 +383,7 @@ class TMC_Stepper {
 
     #if ENABLED(TMC_DEBUG)
       #if ENABLED(MONITOR_DRIVER_STATUS)
-        static void set_report_status(const bool status);
+        static void set_report_interval(const uint16_t update_interval);
       #endif
       static void report_all(const bool print_x, const bool print_y, const bool print_z, const bool print_e);
       static void get_registers(const bool print_x, const bool print_y, const bool print_z, const bool print_e);
@@ -520,7 +536,7 @@ class TMC_Stepper {
           FORCE_INLINE static uint32_t get_pwm_scale(MKTMC* st) { return 0; }
           FORCE_INLINE static uint8_t get_status_response(MKTMC* st, uint32_t drv_status) { UNUSED(st); return drv_status & 0xFF; }
         #endif
-      #elif HAVE_DRV(TMC2130) || HAVE_DRV(TMC2160) || HAVE_DRV(TMC5130) || HAVE_DRV(TMC5160)
+      #elif HAS_TMCX1X0
         #if ENABLED(TMC_DEBUG)
           FORCE_INLINE static uint32_t get_pwm_scale(MKTMC* st) { return st->PWM_SCALE(); }
           FORCE_INLINE static uint8_t get_status_response(MKTMC* st, uint32_t drv_status) { UNUSED(drv_status); return st->status_response & 0xF; }
@@ -533,7 +549,7 @@ class TMC_Stepper {
       #endif
 
       static TMC_driver_data get_driver_data(MKTMC* st);
-      static void monitor_driver(MKTMC* st);
+      static void monitor_driver(MKTMC* st, const bool need_update_error_counters, const bool need_debug_reporting);
 
     #endif
 
