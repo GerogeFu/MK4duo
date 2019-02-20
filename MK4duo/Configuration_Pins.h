@@ -260,12 +260,9 @@
   #define POWER_CONSUMPTION_PIN NoPin
 #endif
 
-#if ENABLED(PHOTOGRAPH)
-  #define PHOTOGRAPH_PIN NoPin
-#endif
-
-#if ENABLED(CHDK)
-  #define CHDK_PIN NoPin
+#if ENABLED(PHOTO_GCODE)
+  #define PHOTOGRAPH_PIN  NoPin
+  #define CHDK_PIN        NoPin
 #endif
 
 #if ENABLED(CASE_LIGHT)

@@ -291,7 +291,7 @@
  * M913 - Set HYBRID_THRESHOLD speed. (Requires HYBRID_THRESHOLD)
  * M914 - Set StallGuard sensitivity. (Requires SENSORLESS_HOMING)
  * M915 - TMC Z axis calibration routine. (Requires TMC)
- * M922 - S[1/0] Enable/disable TMC debug. (Requires TMC)
+ * M922 - Enable/disable TMC debug. (Requires TMC_DEBUG)
  * M930 - TMC set blank_time.
  * M931 - TMC set off_time.
  * M932 - TMC set hysteresis_start.
