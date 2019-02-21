@@ -30,15 +30,8 @@
 
 /**
  * M530: S<printing> L<layer> - Enables explicit printing mode (S1) or disables it (S0). L can set layer count
- *  X - Force save stats
- *
  */
 inline void gcode_M530(void) {
-
-  if (parser.seen('X')) {
-    SERIAL_EM("Statistics stored");
-    print_job_counter.saveStats();
-  }
 
   if (parser.seen('L')) printer.maxLayer = parser.value_long();
 

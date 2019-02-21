@@ -30,8 +30,15 @@
 
 /**
  * M78: Show print statistics
+ *  X1 - Force save statistics
  */
 inline void gcode_M78(void) {
+
+  if (parser.seenval('X')) {
+    SERIAL_EM("Statistics stored");
+    print_job_counter.saveStats();
+    return;
+  }
 
   // "M78 S78" will reset the statistics
   if (parser.intval('S') == 78) {
