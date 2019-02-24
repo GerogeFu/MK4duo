@@ -157,7 +157,7 @@
     void HAL::spiBegin() {
       if (spiInitMaded) return;
       SPI.begin();
-      spiInit(SPI_SPEED);
+      spiInit(1);
       spiInitMaded = true;
     }
 
@@ -282,10 +282,7 @@
     }
 
     // Read single byte from SPI
-    uint8_t HAL::spiReceive(void) {
-      uint8_t data = spiTransfer(0xFF);
-      return data;
-    }
+    uint8_t HAL::spiReceive(void) { return spiTransfer(0xFF); }
 
     uint8_t HAL::spiReceive(uint32_t chan) {
       uint8_t spirec_tmp;

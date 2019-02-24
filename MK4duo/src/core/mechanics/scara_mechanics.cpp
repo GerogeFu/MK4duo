@@ -35,11 +35,7 @@ Scara_Mechanics mechanics;
 /** Public Parameters */
 mechanics_data_t Scara_Mechanics::data;
 
-const float Scara_Mechanics::base_max_pos[XYZ]    = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS },
-            Scara_Mechanics::base_min_pos[XYZ]    = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS },
-            Scara_Mechanics::base_home_pos[XYZ]   = { X_HOME_POS, Y_HOME_POS, Z_HOME_POS },
-            Scara_Mechanics::max_length[XYZ]      = { X_MAX_LENGTH, Y_MAX_LENGTH, Z_MAX_LENGTH },
-            Scara_Mechanics::L1                   = SCARA_LINKAGE_1,
+const float Scara_Mechanics::L1                   = SCARA_LINKAGE_1,
             Scara_Mechanics::L2                   = SCARA_LINKAGE_2,
             Scara_Mechanics::L1_2                 = sq(float(L1)),
             Scara_Mechanics::L1_2_2               = 2.0f * L1_2,
@@ -54,7 +50,7 @@ void Scara_Mechanics::factory_parameters() {
                         tmp_maxfeedrate[]   PROGMEM = DEFAULT_MAX_FEEDRATE;
 
   static const uint32_t tmp_maxacc[]        PROGMEM = DEFAULT_MAX_ACCELERATION,
-                        tmp_retractacc[]    PROGMEM = DEFAULT_RETRACT_ACCELERATION;
+                        tmp_retract[]       PROGMEM = DEFAULT_RETRACT_ACCELERATION;
 
   LOOP_XYZE_N(i) {
     data.axis_steps_per_mm[i]           = pgm_read_float(&tmp_step[i < COUNT(tmp_step) ? i : COUNT(tmp_step) - 1]);
@@ -63,7 +59,22 @@ void Scara_Mechanics::factory_parameters() {
   }
 
   LOOP_EXTRUDER()
-    data.retract_acceleration[e]  = pgm_read_dword_near(&tmp_retractacc[e < COUNT(tmp_retractacc) ? e : COUNT(tmp_retractacc) - 1]);
+    data.retract_acceleration[e]  = pgm_read_dword_near(&tmp_retract[e < COUNT(tmp_retract) ? e : COUNT(tmp_retract) - 1]);
+
+  // Base min pos
+  data.base_min_pos[X_AXIS]       = X_MIN_POS;
+  data.base_min_pos[Y_AXIS]       = Y_MIN_POS;
+  data.base_min_pos[Z_AXIS]       = Z_MIN_POS;
+
+  // Base max pos
+  data.base_max_pos[X_AXIS]       = X_MAX_POS;
+  data.base_max_pos[Y_AXIS]       = Y_MAX_POS;
+  data.base_max_pos[Z_AXIS]       = Z_MAX_POS;
+
+  // Base home pos
+  data.base_home_pos[X_AXIS]      = X_HOME_POS;
+  data.base_home_pos[Y_AXIS]      = Y_HOME_POS;
+  data.base_home_pos[Z_AXIS]      = Z_HOME_POS;
 
   data.acceleration               = DEFAULT_ACCELERATION;
   data.travel_acceleration        = DEFAULT_TRAVEL_ACCELERATION;
@@ -390,7 +401,7 @@ void Scara_Mechanics::home() {
     #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
       mechanics.Nextion_gfx_clear();
     #endif
-    return true;
+    return;
   }
 
   #if HAS_POWER_SWITCH
@@ -475,7 +486,7 @@ void Scara_Mechanics::home() {
   }
 
   #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
-    Nextion_gfx_clear();
+    mechanics.Nextion_gfx_clear();
   #endif
 
   #if HAS_LEVELING
@@ -493,7 +504,7 @@ void Scara_Mechanics::home() {
 
   lcdui.refresh();
 
-  report_current_position();
+  mechanics.report_current_position();
 
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) SERIAL_EM("<<< G28");
@@ -501,6 +512,9 @@ void Scara_Mechanics::home() {
 
 }
 
+/**
+ * Home an individual linear axis
+ */
 void Scara_Mechanics::do_homing_move(const AxisEnum axis, const float distance, const float fr_mm_s/*=0.0*/) {
 
   #if ENABLED(DEBUG_FEATURE)
@@ -607,8 +621,8 @@ void Scara_Mechanics::set_axis_is_at_home(const AxisEnum axis) {
        * SCARA home positions are based on configuration since the actual
        * limits are determined by the inverse kinematic transform.
        */
-      endstops.soft_endstop_min[axis] = base_min_pos[axis]; // + (cartes[axis] - base_home_pos(axis));
-      endstops.soft_endstop_max[axis] = base_max_pos[axis]; // + (cartes[axis] - base_home_pos(axis));
+      endstops.soft_endstop_min[axis] = data.base_min_pos[axis]; // + (cartes[axis] - base_home_pos(axis));
+      endstops.soft_endstop_max[axis] = data.base_max_pos[axis]; // + (cartes[axis] - base_home_pos(axis));
     }
     else
   #endif
@@ -697,10 +711,12 @@ void Scara_Mechanics::report_current_position_detail() {
   };
   report_xyz(logical);
 
+  SERIAL_MSG("Raw:    ");
+  report_xyze(current_position);
+
   float leveled[XYZ] = { current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS] };
 
-  #if PLANNER_LEVELING
-
+  #if HAS_LEVELING
     SERIAL_MSG("Leveled:");
     bedlevel.apply_leveling(leveled);
     report_xyz(leveled);
@@ -709,7 +725,6 @@ void Scara_Mechanics::report_current_position_detail() {
     float unleveled[XYZ] = { leveled[X_AXIS], leveled[Y_AXIS], leveled[Z_AXIS] };
     bedlevel.unapply_leveling(unleveled);
     report_xyz(unleveled);
-
   #endif
 
   SERIAL_MSG("ScaraK: ");
@@ -724,7 +739,6 @@ void Scara_Mechanics::report_current_position_detail() {
     SERIAL_CHR(axis_codes[i]);
     SERIAL_CHR(':');
     SERIAL_VAL(stepper.position((AxisEnum)i));
-    SERIAL_MSG("    ");
   }
   SERIAL_EOL();
 
@@ -1085,7 +1099,7 @@ void Scara_Mechanics::homeaxis(const AxisEnum axis) {
   #endif
 
   // Fast move towards endstop until triggered
-  mechanics.do_homing_move(axis, 1.5f * max_length[axis] * get_homedir(axis));
+  mechanics.do_homing_move(axis, 1.5f * data.base_max_pos[axis] * get_homedir(axis));
 
   // When homing Z with probe respect probe clearance
   const float bump = get_homedir(axis) * (

@@ -335,7 +335,7 @@
 
       endstops.setSoftEndstop(false);
 
-      mechanics.do_blocking_move_to_z(Z_MAX_POS + _z);
+      mechanics.do_blocking_move_to_z(Z_MAX_BED + _z);
 
       #if AXIS_HAS_TMC(Z)
         stepperZ->rms_current(Z_current_1);
@@ -347,7 +347,7 @@
         stepperZ->rms_current(Z3_current_1);
       #endif
 
-      mechanics.do_blocking_move_to_z(Z_MAX_POS);
+      mechanics.do_blocking_move_to_z(Z_MAX_BED);
       endstops.setSoftEndstop(true);
 
       SERIAL_EM("\nHoming Z because we lost steps");

@@ -184,18 +184,20 @@ void Delta_Mechanics::get_cartesian_from_steppers() {
 
     // The number of segments-per-second times the duration
     // gives the number of segments we should produce
-    const uint16_t segments = MAX(1, data.segments_per_second * seconds);
+    const uint16_t segments = MAX(1U, data.segments_per_second * seconds);
 
     // Now compute the number of lines needed
-    const uint16_t numLines = (segments + data.segments_per_line - 1) / data.segments_per_line;
+    uint16_t numLines = (segments + data.segments_per_line - 1) / data.segments_per_line;
 
-    const float start_position[XYZE] = {
-                  current_position[X_AXIS],
-                  current_position[Y_AXIS],
-                  current_position[Z_AXIS],
-                  current_position[E_AXIS]
+    // The approximate length of each segment
+    const float inv_numLines = 1.0f / float(numLines),
+                segment_distance[XYZE] = {
+                  difference[X_AXIS] * inv_numLines,
+                  difference[Y_AXIS] * inv_numLines,
+                  difference[Z_AXIS] * inv_numLines,
+                  difference[E_AXIS] * inv_numLines
                 },
-                cartesian_segment_mm = cartesian_distance / (float)numLines;
+                cartesian_segment_mm = cartesian_distance * inv_numLines;
 
     /*
     SERIAL_MV("mm=", cartesian_distance);
@@ -208,13 +210,18 @@ void Delta_Mechanics::get_cartesian_from_steppers() {
 
     // Get the current position as starting point
     float raw[XYZE];
+    COPY_ARRAY(raw, current_position);
 
     // Calculate and execute the segments
-    for (uint16_t lineNumber = 1; lineNumber <= numLines; lineNumber++) {
+    while (--numLines) {
 
-      printer.check_periodical_actions();
+      static millis_t next_idle_ms = millis() + 200UL;
+      if (ELAPSED(millis(), next_idle_ms)) {
+        next_idle_ms = millis() + 200UL;
+        printer.idle();
+      }
 
-      LOOP_XYZE(i) raw[i] = start_position[i] + (difference[i] * lineNumber) / (float)numLines;
+      LOOP_XYZE(i) raw[i] += segment_distance[i];
 
       if (!planner.buffer_line(raw, _feedrate_mm_s, tools.active_extruder, cartesian_segment_mm))
         break;

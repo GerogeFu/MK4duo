@@ -544,7 +544,7 @@ void Probe::do_raise(const float z_raise) {
   float z_dest = z_raise;
   if (data.offset[Z_AXIS] < 0) z_dest -= data.offset[Z_AXIS];
 
-  NOMORE(z_dest, Z_MAX_POS);
+  NOMORE(z_dest, Z_MAX_BED);
 
   if (z_dest > mechanics.current_position[Z_AXIS])
     mechanics.do_blocking_move_to_z(z_dest);
@@ -653,7 +653,7 @@ float Probe::run_probing() {
     #endif
 
     // Dock sled a bit closer to ensure proper capturing
-    mechanics.do_blocking_move_to_x(X_MAX_POS + SLED_DOCKING_OFFSET - ((stow) ? 1 : 0));
+    mechanics.do_blocking_move_to_x(X_MAX_BED + SLED_DOCKING_OFFSET - ((stow) ? 1 : 0));
     WRITE(SLED_PIN, !stow); // switch solenoid
   }
 

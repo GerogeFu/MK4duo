@@ -420,7 +420,7 @@
 // Prevent a single extrusion longer than EXTRUDE MAXLENGTH.
 // Note: For Bowden Extruders make this large enough to allow load/unload.
 //#define PREVENT_LENGTHY_EXTRUDE
-#define EXTRUDE_MAXLENGTH (X_MAX_LENGTH + Y_MAX_LENGTH)
+#define EXTRUDE_MAXLENGTH 400
 /***********************************************************************/
 
 #endif /* _CONFIGURATION_TEMPERATURE_H_ */

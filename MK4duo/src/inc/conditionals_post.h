@@ -86,25 +86,17 @@
   #define FRONT_PROBE_BED_POSITION  -(mechanics.data.probe_radius)
   #define BACK_PROBE_BED_POSITION    (mechanics.data.probe_radius)
 
-  #define X_MIN_POS -(mechanics.data.print_radius)
-  #define X_MAX_POS  (mechanics.data.print_radius)
-  #define Y_MIN_POS -(mechanics.data.print_radius)
-  #define Y_MAX_POS  (mechanics.data.print_radius)
-  #define Z_MAX_POS  (mechanics.data.height)
-  #define Z_MIN_POS 0
-  #define E_MIN_POS 0
+  #define X_MIN_BED  -(mechanics.data.print_radius)
+  #define X_MAX_BED   (mechanics.data.print_radius)
+  #define Y_MIN_BED  -(mechanics.data.print_radius)
+  #define Y_MAX_BED   (mechanics.data.print_radius)
+  #define Z_MAX_BED   (mechanics.data.height)
+  #define Z_MIN_BED   0
 
-  #define X_MIN_POS_ZERO (X_MIN_POS)
-  #define Y_MIN_POS_ZERO (Y_MIN_POS)
-
-  #define X_BED_SIZE ((DELTA_PRINTABLE_RADIUS) * 2)
-  #define Y_BED_SIZE ((DELTA_PRINTABLE_RADIUS) * 2)
-
-  #define UBL_PROBEABLE_RADIUS   (DELTA_PRINTABLE_RADIUS)
-  #define MESH_MIN_X        -(UBL_PROBEABLE_RADIUS)
-  #define MESH_MAX_X         (UBL_PROBEABLE_RADIUS)
-  #define MESH_MIN_Y        -(UBL_PROBEABLE_RADIUS)
-  #define MESH_MAX_Y         (UBL_PROBEABLE_RADIUS)
+  #define MESH_MIN_X -(mechanics.data.probe_radius)
+  #define MESH_MAX_X  (mechanics.data.probe_radius)
+  #define MESH_MIN_Y -(mechanics.data.probe_radius)
+  #define MESH_MAX_Y  (mechanics.data.probe_radius)
 
   #define PROBE_PT_1_X 0
   #define PROBE_PT_1_Y 0
@@ -128,16 +120,12 @@
 
 #else // !MECH(DELTA)
 
-  #if ((X_MIN_POS) <= 0)
-    #define X_MIN_POS_ZERO 0
-  #else
-    #define X_MIN_POS_ZERO (X_MIN_POS)
-  #endif
-  #if ((Y_MIN_POS) <= 0)
-    #define Y_MIN_POS_ZERO 0
-  #else
-    #define Y_MIN_POS_ZERO (Y_MIN_POS)
-  #endif
+  #define X_MIN_BED (mechanics.data.base_min_pos[X_AXIS])
+  #define X_MAX_BED (mechanics.data.base_max_pos[X_AXIS])
+  #define Y_MIN_BED (mechanics.data.base_min_pos[Y_AXIS])
+  #define Y_MAX_BED (mechanics.data.base_max_pos[Y_AXIS])
+  #define Z_MIN_BED (mechanics.data.base_min_pos[Z_AXIS])
+  #define Z_MAX_BED (mechanics.data.base_max_pos[Z_AXIS])
 
 #endif // !MECH(DELTA)
 
@@ -145,37 +133,6 @@
 #if IS_KINEMATIC
   #define BED_CENTER_AT_0_0
 #endif
-
-/**
- * Axis lengths and center
- */
-#define X_MAX_LENGTH (X_MAX_POS - (X_MIN_POS))
-#define Y_MAX_LENGTH (Y_MAX_POS - (Y_MIN_POS))
-#define Z_MAX_LENGTH (Z_MAX_POS - (Z_MIN_POS))
-
-// Defined only if the sanity-check is bypassed
-#ifndef X_BED_SIZE
-  #define X_BED_SIZE X_MAX_LENGTH
-#endif
-#ifndef Y_BED_SIZE
-  #define Y_BED_SIZE Y_MAX_LENGTH
-#endif
-
-// Define center values for future use
-#ifdef BED_CENTER_AT_0_0
-  #define X_CENTER 0
-  #define Y_CENTER 0
-#else
-  #define X_CENTER ((X_BED_SIZE) / 2)
-  #define Y_CENTER ((Y_BED_SIZE) / 2)
-#endif
-#define Z_CENTER ((Z_MIN_POS + Z_MAX_POS) / 2)
-
-// Get the linear boundaries of the bed
-#define X_MIN_BED (X_CENTER - (X_BED_SIZE) / 2)
-#define X_MAX_BED (X_CENTER + (X_BED_SIZE) / 2)
-#define Y_MIN_BED (Y_CENTER - (Y_BED_SIZE) / 2)
-#define Y_MAX_BED (Y_CENTER + (Y_BED_SIZE) / 2)
 
 /**
  * CoreXY, CoreXZ, and CoreYZ - and their reverse
@@ -215,39 +172,23 @@
 #if ENABLED(MANUAL_X_HOME_POS)
   #define X_HOME_POS MANUAL_X_HOME_POS
 #elif ENABLED(BED_CENTER_AT_0_0)
-  #if MECH(DELTA)
-    #define X_HOME_POS 0
-  #else
-    #define X_HOME_POS ((X_MAX_LENGTH) * (X_HOME_DIR) * 0.5)
-  #endif
+   #define X_HOME_POS ((mechanics.data.base_max_pos[X_AXIS] - mechanics.data.base_min_pos[X_AXIS]) * (X_HOME_DIR) * 0.5)
 #else
-  #if MECH(DELTA)
-    #define X_HOME_POS (X_MIN_POS + (X_MAX_LENGTH) * 0.5)
-  #else
-    #define X_HOME_POS (X_HOME_DIR < 0 ? X_MIN_POS : X_MAX_POS)
-  #endif
+  #define X_HOME_POS (X_HOME_DIR < 0 ? mechanics.data.base_min_pos[X_AXIS] : mechanics.data.base_max_pos[X_AXIS])
 #endif
 
 #if ENABLED(MANUAL_Y_HOME_POS)
   #define Y_HOME_POS MANUAL_Y_HOME_POS
 #elif ENABLED(BED_CENTER_AT_0_0)
-  #if MECH(DELTA)
-    #define Y_HOME_POS 0
-  #else
-    #define Y_HOME_POS ((Y_MAX_LENGTH) * (Y_HOME_DIR) * 0.5)
-  #endif
+  #define Y_HOME_POS ((mechanics.data.base_max_pos[Y_AXIS] - mechanics.data.base_min_pos[Y_AXIS]) * (Y_HOME_DIR) * 0.5)
 #else
-  #if MECH(DELTA)
-    #define Y_HOME_POS (Y_MIN_POS + (Y_MAX_LENGTH) * 0.5)
-  #else
-    #define Y_HOME_POS (Y_HOME_DIR < 0 ? Y_MIN_POS : Y_MAX_POS)
-  #endif
+  #define Y_HOME_POS (Y_HOME_DIR < 0 ? mechanics.data.base_min_pos[Y_AXIS] : mechanics.data.base_max_pos[Y_AXIS])
 #endif
 
 #if ENABLED(MANUAL_Z_HOME_POS)
   #define Z_HOME_POS MANUAL_Z_HOME_POS
 #else
-  #define Z_HOME_POS (Z_HOME_DIR < 0 ? Z_MIN_POS : Z_MAX_POS)
+  #define Z_HOME_POS (Z_HOME_DIR < 0 ? mechanics.data.base_min_pos[Z_AXIS] : mechanics.data.base_max_pos[Z_AXIS])
 #endif
 
 /**
@@ -267,10 +208,10 @@
  */
 #if ENABLED(Z_SAFE_HOMING)
   #if DISABLED(Z_SAFE_HOMING_X_POINT)
-    #define Z_SAFE_HOMING_X_POINT ((X_MIN_POS + X_MAX_POS) / 2)
+    #define Z_SAFE_HOMING_X_POINT ((mechanics.data.base_min_pos[X_AXIS] + mechanics.data.base_max_pos[X_AXIS]) / 2)
   #endif
   #if DISABLED(Z_SAFE_HOMING_Y_POINT)
-    #define Z_SAFE_HOMING_Y_POINT ((Y_MIN_POS + Y_MAX_POS) / 2)
+    #define Z_SAFE_HOMING_Y_POINT ((mechanics.data.base_min_pos[Y_AXIS] + mechanics.data.base_max_pos[Y_AXIS]) / 2)
   #endif
   #define X_TILT_FULCRUM Z_SAFE_HOMING_X_POINT
   #define Y_TILT_FULCRUM Z_SAFE_HOMING_Y_POINT
@@ -650,9 +591,9 @@
   #undef SDSORT_USES_STACK
   #undef SDSORT_CACHE_NAMES
   #undef SDSORT_DYNAMIC_RAM
-  #define SDCARD_SORT_ALPHA
+  //#define SDCARD_SORT_ALPHA
   #define SDSORT_LIMIT 256
-  #define SDSORT_GCODE true
+  #define SDSORT_GCODE false
   #define SDSORT_USES_RAM false
   #define SDSORT_USES_STACK false
   #define SDSORT_CACHE_NAMES false
@@ -796,10 +737,10 @@
  * These can be further constrained in code for Delta and SCARA
  */
 #if MECH(DELTA)
-  #define MIN_PROBE_X -(mechanics.data.print_radius)
-  #define MAX_PROBE_X  (mechanics.data.print_radius)
-  #define MIN_PROBE_Y -(mechanics.data.print_radius)
-  #define MAX_PROBE_Y  (mechanics.data.print_radius)
+  #define MIN_PROBE_X -(mechanics.data.probe_radius)
+  #define MAX_PROBE_X  (mechanics.data.probe_radius)
+  #define MIN_PROBE_Y -(mechanics.data.probe_radius)
+  #define MAX_PROBE_Y  (mechanics.data.probe_radius)
 #elif IS_SCARA
   #define SCARA_PRINTABLE_RADIUS (SCARA_LINKAGE_1 + SCARA_LINKAGE_2)
   #define MIN_PROBE_X (X_CENTER - (SCARA_PRINTABLE_RADIUS) + (MIN_PROBE_EDGE))
@@ -808,10 +749,10 @@
   #define MAX_PROBE_Y (Y_CENTER + (SCARA_PRINTABLE_RADIUS) - (MIN_PROBE_EDGE))
 #else
   // Boundaries for Cartesian probing based on bed limits
-  #define MIN_PROBE_X (MAX(X_MIN_BED + (MIN_PROBE_EDGE), X_MIN_POS + probe.data.offset[X_AXIS]))
-  #define MIN_PROBE_Y (MAX(Y_MIN_BED + (MIN_PROBE_EDGE), Y_MIN_POS + probe.data.offset[Y_AXIS]))
-  #define MAX_PROBE_X (MIN(X_MAX_BED - (MIN_PROBE_EDGE), X_MAX_POS + probe.data.offset[X_AXIS]))
-  #define MAX_PROBE_Y (MIN(Y_MAX_BED - (MIN_PROBE_EDGE), Y_MAX_POS + probe.data.offset[Y_AXIS]))
+  #define MIN_PROBE_X (mechanics.data.base_min_pos[X_AXIS] + probe.data.offset[X_AXIS])
+  #define MIN_PROBE_Y (mechanics.data.base_min_pos[Y_AXIS] + probe.data.offset[Y_AXIS])
+  #define MAX_PROBE_X (mechanics.data.base_max_pos[X_AXIS] + probe.data.offset[X_AXIS])
+  #define MAX_PROBE_Y (mechanics.data.base_max_pos[Y_AXIS] + probe.data.offset[Y_AXIS])
 #endif
 
 /**
@@ -1169,7 +1110,7 @@
   #define X_PROBE_OFFSET_FROM_NOZZLE 0
   #define Y_PROBE_OFFSET_FROM_NOZZLE 0
   #define Z_PROBE_OFFSET_FROM_NOZZLE 0
-  #define _Z_PROBE_DEPLOY_HEIGHT (Z_MAX_POS / 2)
+  #define _Z_PROBE_DEPLOY_HEIGHT (Z_MAX_BED / 2)
 #endif
 
 // Add commands that need sub-codes to this list

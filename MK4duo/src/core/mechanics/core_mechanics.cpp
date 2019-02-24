@@ -35,11 +35,6 @@ Core_Mechanics mechanics;
 /** Public Parameters */
 mechanics_data_t Core_Mechanics::data;
 
-const float Core_Mechanics::base_max_pos[XYZ]   = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS },
-            Core_Mechanics::base_min_pos[XYZ]   = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS },
-            Core_Mechanics::base_home_pos[XYZ]  = { X_HOME_POS, Y_HOME_POS, Z_HOME_POS },
-            Core_Mechanics::max_length[XYZ]     = { X_MAX_LENGTH, Y_MAX_LENGTH, Z_MAX_LENGTH };
-
 /** Private Parameters */
 constexpr float slop = 0.0001;
 
@@ -50,7 +45,7 @@ void Core_Mechanics::factory_parameters() {
                         tmp_maxfeedrate[]   PROGMEM = DEFAULT_MAX_FEEDRATE;
 
   static const uint32_t tmp_maxacc[]        PROGMEM = DEFAULT_MAX_ACCELERATION,
-                        tmp_retractacc[]    PROGMEM = DEFAULT_RETRACT_ACCELERATION;
+                        tmp_retract[]       PROGMEM = DEFAULT_RETRACT_ACCELERATION;
 
   LOOP_XYZE_N(i) {
     data.axis_steps_per_mm[i]           = pgm_read_float(&tmp_step[i < COUNT(tmp_step) ? i : COUNT(tmp_step) - 1]);
@@ -59,7 +54,22 @@ void Core_Mechanics::factory_parameters() {
   }
 
   LOOP_EXTRUDER()
-    data.retract_acceleration[e]  = pgm_read_dword_near(&tmp_retractacc[e < COUNT(tmp_retractacc) ? e : COUNT(tmp_retractacc) - 1]);
+    data.retract_acceleration[e]  = pgm_read_dword_near(&tmp_retract[e < COUNT(tmp_retract) ? e : COUNT(tmp_retract) - 1]);
+
+  // Base min pos
+  data.base_min_pos[X_AXIS]       = X_MIN_POS;
+  data.base_min_pos[Y_AXIS]       = Y_MIN_POS;
+  data.base_min_pos[Z_AXIS]       = Z_MIN_POS;
+
+  // Base max pos
+  data.base_max_pos[X_AXIS]       = X_MAX_POS;
+  data.base_max_pos[Y_AXIS]       = Y_MAX_POS;
+  data.base_max_pos[Z_AXIS]       = Z_MAX_POS;
+
+  // Base home pos
+  data.base_home_pos[X_AXIS]      = X_HOME_POS;
+  data.base_home_pos[Y_AXIS]      = Y_HOME_POS;
+  data.base_home_pos[Z_AXIS]      = Z_HOME_POS;
 
   data.acceleration               = DEFAULT_ACCELERATION;
   data.travel_acceleration        = DEFAULT_TRAVEL_ACCELERATION;
@@ -452,7 +462,7 @@ void Core_Mechanics::set_axis_is_at_home(const AxisEnum axis) {
     endstops.update_software_endstops(axis);
   #endif
 
-  current_position[axis] = base_home_pos[axis];
+  current_position[axis] = data.base_home_pos[axis];
 
   /**
    * Z Probe Z Homing? Account for the probe's Z offset.
@@ -485,8 +495,8 @@ void Core_Mechanics::set_axis_is_at_home(const AxisEnum axis) {
 
 // Return true if the given position is within the machine bounds.
 bool Core_Mechanics::position_is_reachable(const float &rx, const float &ry) {
-  if (!WITHIN(ry, Y_MIN_POS - slop, Y_MAX_POS + slop)) return false;
-  return WITHIN(rx, X_MIN_POS - slop, X_MAX_POS + slop);
+  if (!WITHIN(ry, data.base_min_pos[Y_AXIS] - slop, data.base_max_pos[Y_AXIS] + slop)) return false;
+  return WITHIN(rx, data.base_min_pos[X_AXIS] - slop, data.base_max_pos[X_AXIS] + slop);
 }
 // Return whether the given position is within the bed, and whether the nozzle
 //  can reach the position required to put the probe at the given position.
@@ -512,7 +522,7 @@ void Core_Mechanics::report_current_position_detail() {
 
   float leveled[XYZ] = { current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS] };
 
-  #if PLANNER_LEVELING
+  #if HAS_LEVELING
     SERIAL_MSG("Leveled:");
     bedlevel.apply_leveling(leveled);
     report_xyz(leveled);
@@ -700,26 +710,24 @@ void Core_Mechanics::report_current_position_detail() {
 
       endstops.clamp_to_software(raw);
 
-      #if HAS_UBL_AND_CURVES
-        float pos[XYZ] = { raw[X_AXIS], raw[Y_AXIS], raw[Z_AXIS] };
-        bedlevel.apply_leveling(pos);
-        if (!planner.buffer_segment(pos[X_AXIS], pos[Y_AXIS], pos[Z_AXIS], raw[E_AXIS], fr_mm_s, tools.active_extruder))
-          break;
-      #else
-        if (!planner.buffer_line(raw, fr_mm_s, tools.active_extruder))
-          break;
+      #if HAS_LEVELING && !PLANNER_LEVELING
+        bedlevel.apply_leveling(raw);
       #endif
+
+      if (!planner.buffer_line(raw, fr_mm_s, tools.active_extruder, MM_PER_ARC_SEGMENT))
+        break;
     }
 
-    #if HAS_UBL_AND_CURVES
-      float pos[XYZ] = { cart[X_AXIS], cart[Y_AXIS], cart[Z_AXIS] };
-      bedlevel.apply_leveling(pos);
-      planner.buffer_segment(pos[X_AXIS], pos[Y_AXIS], pos[Z_AXIS], cart[E_AXIS], fr_mm_s, tools.active_extruder);
-    #else
-      planner.buffer_line(cart, fr_mm_s, tools.active_extruder);
+    // Ensure last segment arrives at target location.
+    COPY_ARRAY(raw, cart);
+
+    #if HAS_LEVELING && !PLANNER_LEVELING
+      bedlevel.apply_leveling(raw);
     #endif
 
-    COPY_ARRAY(current_position, cart);
+    planner.buffer_line(raw, fr_mm_s, tools.active_extruder, MM_PER_ARC_SEGMENT);
+
+    COPY_ARRAY(current_position, raw);
 
   }
 
@@ -852,7 +860,7 @@ void Core_Mechanics::report_current_position_detail() {
 #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
 
   void Core_Mechanics::Nextion_gfx_clear() {
-    gfx_clear(X_MAX_POS, Y_MAX_POS, Z_MAX_POS);
+    gfx_clear(X_MAX_BED, Y_MAX_BED, Z_MAX_BED);
     gfx_cursor_to(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS]);
   }
 
@@ -898,7 +906,7 @@ void Core_Mechanics::homeaxis(const AxisEnum axis) {
     if (axis == Z_AXIS && bltouch.set_deployed(true)) return;
   #endif
 
-  do_homing_move(axis, 1.5f * max_length[axis] * get_homedir(axis));
+  do_homing_move(axis, 1.5f * data.base_max_pos[axis] * get_homedir(axis));
 
   #if HOMING_Z_WITH_PROBE && ENABLED(BLTOUCH)
     // BLTOUCH needs to be deployed every time
@@ -1062,26 +1070,24 @@ void Core_Mechanics::homeaxis(const AxisEnum axis) {
     current_position[X_AXIS] = current_position[Y_AXIS] = 0;
     sync_plan_position();
 
-    const float mlx = max_length[X_AXIS],
-                mly = max_length[Y_AXIS],
-                mlratio = mlx > mly ? mly / mlx : mlx / mly,
+    const float mlratio = data.base_max_pos[X_AXIS] > data.base_max_pos[Y_AXIS] ? data.base_max_pos[Y_AXIS] / data.base_max_pos[X_AXIS] : data.base_max_pos[X_AXIS] / data.base_max_pos[Y_AXIS],
                 fr_mm_s = MIN(homing_feedrate_mm_s[X_AXIS], homing_feedrate_mm_s[Y_AXIS]) * SQRT(sq(mlratio) + 1.0);
 
     #if ENABLED(SENSORLESS_HOMING)
       sensorless_t stealth_states;
-      stealth_states = start_sensorless_homing_per_axis(X_AXIS);
-      stealth_states = start_sensorless_homing_per_axis(Y_AXIS);
+      stealth_states.x = tmc.enable_stallguard(stepperX);
+      stealth_states.y = tmc.enable_stallguard(stepperY);
     #endif
 
-    do_blocking_move_to_xy(1.5f * mlx * home_dir.X, 1.5f * mly * home_dir.Y, fr_mm_s);
+    do_blocking_move_to_xy(1.5f * data.base_max_pos[X_AXIS] * x_axis_home_dir, 1.5f * data.base_max_pos[Y_AXIS] * home_dir.Y, fr_mm_s);
 
     endstops.validate_homing_move();
 
     current_position[X_AXIS] = current_position[Y_AXIS] = 0.0f;
 
     #if ENABLED(SENSORLESS_HOMING)
-      stop_sensorless_homing_per_axis(X_AXIS, stealth_states);
-      stop_sensorless_homing_per_axis(Y_AXIS, stealth_states);
+      tmc.disable_stallguard(stepperX, stealth_states.x);
+      tmc.disable_stallguard(stepperY, stealth_states.y);
     #endif
   }
 
@@ -1179,7 +1185,7 @@ void Core_Mechanics::homeaxis(const AxisEnum axis) {
       const float newzero = probe_pt(destination[X_AXIS], destination[Y_AXIS], true, 1) - (2 * probe.data.offset[Z_AXIS]);
       current_position[Z_AXIS] -= newzero;
       destination[Z_AXIS] = current_position[Z_AXIS];
-      endstops.soft_endstop_max[Z_AXIS] = base_max_pos(Z_AXIS) - newzero;
+      endstops.soft_endstop_max[Z_AXIS] = data.base_max_pos(Z_AXIS) - newzero;
 
       sync_plan_position();
       do_blocking_move_to_z(MIN_Z_HEIGHT_FOR_HOMING);

@@ -203,17 +203,17 @@
       case 5:
         SERIAL_EM(",");
         SERIAL_MSG("\"axisMins\":[");
-        SERIAL_VAL((int) X_MIN_POS);
+        SERIAL_VAL((int) X_MIN_BED);
         SERIAL_CHR(',');
-        SERIAL_VAL((int) Y_MIN_POS);
+        SERIAL_VAL((int) Y_MIN_BED);
         SERIAL_CHR(',');
-        SERIAL_VAL((int) Z_MIN_POS);
+        SERIAL_VAL((int) Z_MIN_BED);
         SERIAL_MSG("],\"axisMaxes\":[");
-        SERIAL_VAL((int) X_MAX_POS);
+        SERIAL_VAL((int) X_MAX_BED);
         SERIAL_CHR(',');
-        SERIAL_VAL((int) Y_MAX_POS);
+        SERIAL_VAL((int) Y_MAX_BED);
         SERIAL_CHR(',');
-        SERIAL_VAL((int) Z_MAX_POS);
+        SERIAL_VAL((int) Z_MAX_BED);
         SERIAL_MSG("],\"planner.accelerations\":[");
         SERIAL_VAL(mechanics.data.max_acceleration_mm_per_s2[X_AXIS]);
         SERIAL_CHR(',');

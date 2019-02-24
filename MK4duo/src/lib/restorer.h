@@ -30,6 +30,7 @@ class restorer {
   public: /** Constructor */
 
     restorer(T& perm) : ref_(perm), val_(perm) {}
+    restorer(T& perm, T temp_val) : ref_(perm), val_(perm) { perm = temp_val; }
 
   public: /** Destructor */
 
@@ -46,5 +47,5 @@ class restorer {
 
 };
 
-#define REMEMBER(X) restorer<typeof(X)> X##_restorer(X)
-#define RESTORE(X) X##_restorer.restore()
+#define REMEMBER(X,...) restorer<typeof(X)> restorer_##X(X, ##__VA_ARGS__)
+#define RESTORE(X)      restorer_##X.restore()

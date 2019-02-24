@@ -212,6 +212,26 @@
 
   #endif // SDCARD_SORT_ALPHA && SDSORT_GCODE
 
+  #if ENABLED(ADVANCED_SD_COMMAND)
+
+    #define CODE_M39
+
+    /**
+     * M39: SD Card Info and formatting
+     *
+     *    F1 for formatting card.
+     *
+     */
+    inline void gcode_M39(void) {
+      if (parser.seen('F')) {
+        card.formatSD();
+        card.mount();
+      }
+      card.infoSD();
+    }
+
+  #endif // ADVANCED_SD_COMMAND
+
   /**
    * M524: Abort the current SD print job (started with M24)
    */

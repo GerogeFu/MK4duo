@@ -213,9 +213,9 @@ void Commands::get_destination() {
   #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
     #if MECH(DELTA)
       if ((parser.seen('X') || parser.seen('Y')) && parser.seen('E'))
-        gfx_line_to(mechanics.destination[X_AXIS] + (X_MAX_POS), mechanics.destination[Y_AXIS] + (Y_MAX_POS), mechanics.destination[Z_AXIS]);
+        gfx_line_to(mechanics.destination[X_AXIS] + (X_MAX_BED), mechanics.destination[Y_AXIS] + (Y_MAX_BED), mechanics.destination[Z_AXIS]);
       else
-        gfx_cursor_to(mechanics.destination[X_AXIS] + (X_MAX_POS), mechanics.destination[Y_AXIS] + (Y_MAX_POS), mechanics.destination[Z_AXIS]);
+        gfx_cursor_to(mechanics.destination[X_AXIS] + (X_MAX_BED), mechanics.destination[Y_AXIS] + (Y_MAX_BED), mechanics.destination[Z_AXIS]);
     #else
       if ((parser.seen('X') || parser.seen('Y')) && parser.seen('E'))
         gfx_line_to(mechanics.destination[X_AXIS], mechanics.destination[Y_AXIS], mechanics.destination[Z_AXIS]);

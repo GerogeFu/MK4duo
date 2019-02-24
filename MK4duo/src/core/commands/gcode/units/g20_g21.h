@@ -26,22 +26,30 @@
  * Copyright (C) 2019 Alberto Cotronei @MagoKimbra
  */
 
-#if ENABLED(INCH_MODE_SUPPORT)
+#define CODE_G20
+#define CODE_G21
 
-  #define CODE_G20
-  #define CODE_G21
+#define INCH_FACTOR 25.4
+#define MM_FACTOR    1.0
 
-  #define INCH_FACTOR 25.4
-  #define MM_FACTOR    1.0
+/**
+ * G20: Set input mode to inches
+ */
+inline void gcode_G20(void) {
+  #if ENABLED(INCH_MODE_SUPPORT)
+    parser.set_input_linear_units(INCH_FACTOR);
+  #else
+    NOOP;
+  #endif
+}
 
-  /**
-   * G20: Set input mode to inches
-   */
-  inline void gcode_G20(void) { parser.set_input_linear_units(INCH_FACTOR); }
-
-  /**
-   * G21: Set input mode to millimeters
-   */
-  inline void gcode_G21(void) { parser.set_input_linear_units(MM_FACTOR); }
-
-#endif
+/**
+ * G21: Set input mode to millimeters
+ */
+inline void gcode_G21(void) {
+  #if ENABLED(INCH_MODE_SUPPORT)
+    parser.set_input_linear_units(MM_FACTOR);
+  #else
+    NOOP;
+  #endif
+}

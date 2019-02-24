@@ -35,11 +35,6 @@ Cartesian_Mechanics mechanics;
 /** Public Parameters */
 mechanics_data_t Cartesian_Mechanics::data;
 
-const float Cartesian_Mechanics::base_max_pos[XYZ]  = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS },
-            Cartesian_Mechanics::base_min_pos[XYZ]  = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS },
-            Cartesian_Mechanics::base_home_pos[XYZ] = { X_HOME_POS, Y_HOME_POS, Z_HOME_POS },
-            Cartesian_Mechanics::max_length[XYZ]    = { X_MAX_LENGTH, Y_MAX_LENGTH, Z_MAX_LENGTH };
-
 #if ENABLED(DUAL_X_CARRIAGE)
   DualXModeEnum Cartesian_Mechanics::dual_x_carriage_mode           = DEFAULT_DUAL_X_CARRIAGE_MODE;
   float         Cartesian_Mechanics::inactive_extruder_x_pos        = X2_MAX_POS,
@@ -72,6 +67,21 @@ void Cartesian_Mechanics::factory_parameters() {
 
   LOOP_EXTRUDER()
     data.retract_acceleration[e]  = pgm_read_dword_near(&tmp_retract[e < COUNT(tmp_retract) ? e : COUNT(tmp_retract) - 1]);
+
+  // Base min pos
+  data.base_min_pos[X_AXIS]       = X_MIN_POS;
+  data.base_min_pos[Y_AXIS]       = Y_MIN_POS;
+  data.base_min_pos[Z_AXIS]       = Z_MIN_POS;
+
+  // Base max pos
+  data.base_max_pos[X_AXIS]       = X_MAX_POS;
+  data.base_max_pos[Y_AXIS]       = Y_MAX_POS;
+  data.base_max_pos[Z_AXIS]       = Z_MAX_POS;
+
+  // Base home pos
+  data.base_home_pos[X_AXIS]      = X_HOME_POS;
+  data.base_home_pos[Y_AXIS]      = Y_HOME_POS;
+  data.base_home_pos[Z_AXIS]      = Z_HOME_POS;
 
   data.acceleration               = DEFAULT_ACCELERATION;
   data.travel_acceleration        = DEFAULT_TRAVEL_ACCELERATION;
@@ -532,7 +542,7 @@ void Cartesian_Mechanics::set_axis_is_at_home(const AxisEnum axis) {
     }
   #endif
 
-  current_position[axis] = base_home_pos[axis];
+  current_position[axis] = data.base_home_pos[axis];
 
   /**
    * Z Probe Z Homing? Account for the probe's Z offset.
@@ -565,14 +575,14 @@ void Cartesian_Mechanics::set_axis_is_at_home(const AxisEnum axis) {
 
 // Return true if the given position is within the machine bounds.
 bool Cartesian_Mechanics::position_is_reachable(const float &rx, const float &ry) {
-  if (!WITHIN(ry, Y_MIN_POS - slop, Y_MAX_POS + slop)) return false;
+  if (!WITHIN(ry, data.base_min_pos[Y_AXIS] - slop, data.base_max_pos[Y_AXIS] + slop)) return false;
   #if ENABLED(DUAL_X_CARRIAGE)
     if (tools.active_extruder)
       return WITHIN(rx, X2_MIN_POS - slop, X2_MAX_POS + slop);
     else
       return WITHIN(rx, X1_MIN_POS - slop, X1_MAX_POS + slop);
   #else
-    return WITHIN(rx, X_MIN_POS - slop, X_MAX_POS + slop);
+    return WITHIN(rx, data.base_min_pos[X_AXIS] - slop, data.base_max_pos[X_AXIS] + slop);
   #endif
 }
 // Return whether the given position is within the bed, and whether the nozzle
@@ -617,7 +627,7 @@ void Cartesian_Mechanics::report_current_position_detail() {
     SERIAL_CHR(' ');
     SERIAL_CHR(axis_codes[i]);
     SERIAL_CHR(':');
-    SERIAL_TXT(stepper.position((AxisEnum)i));
+    SERIAL_VAL(stepper.position((AxisEnum)i));
   }
   SERIAL_EOL();
 
@@ -814,7 +824,7 @@ void Cartesian_Mechanics::report_current_position_detail() {
 
   float Cartesian_Mechanics::x_home_pos(const int extruder) {
     if (extruder == 0)
-      return base_home_pos[X_AXIS];
+      return data.base_home_pos[X_AXIS];
     else
       // In dual carriage mode the extruder offset provides an override of the
       // second X-carriage offset when homed - otherwise X2_HOME_POS is used.
@@ -1029,7 +1039,7 @@ void Cartesian_Mechanics::report_current_position_detail() {
 #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
 
   void Cartesian_Mechanics::Nextion_gfx_clear() {
-    gfx_clear(X_MAX_POS, Y_MAX_POS, Z_MAX_POS);
+    gfx_clear(X_MAX_BED, Y_MAX_BED, Z_MAX_BED);
     gfx_cursor_to(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS]);
   }
 
@@ -1082,7 +1092,7 @@ void Cartesian_Mechanics::homeaxis(const AxisEnum axis) {
     if (axis == Z_AXIS && bltouch.set_deployed(true)) return;
   #endif
 
-  do_homing_move(axis, 1.5f * max_length[axis] * axis_home_dir);
+  do_homing_move(axis, 1.5f * data.base_max_pos[axis] * axis_home_dir);
 
   #if HOMING_Z_WITH_PROBE && ENABLED(BLTOUCH)
     // BLTOUCH needs to be deployed every time
@@ -1252,9 +1262,7 @@ void Cartesian_Mechanics::homeaxis(const AxisEnum axis) {
       const int x_axis_home_dir = home_dir.X;
     #endif
 
-    const float mlx = max_length[X_AXIS],
-                mly = max_length[Y_AXIS],
-                mlratio = mlx > mly ? mly / mlx : mlx / mly,
+    const float mlratio = data.base_max_pos[X_AXIS] > data.base_max_pos[Y_AXIS] ? data.base_max_pos[Y_AXIS] / data.base_max_pos[X_AXIS] : data.base_max_pos[X_AXIS] / data.base_max_pos[Y_AXIS],
                 fr_mm_s = MIN(homing_feedrate_mm_s[X_AXIS], homing_feedrate_mm_s[Y_AXIS]) * SQRT(sq(mlratio) + 1.0);
 
     #if ENABLED(SENSORLESS_HOMING)
@@ -1269,7 +1277,7 @@ void Cartesian_Mechanics::homeaxis(const AxisEnum axis) {
       #endif
     #endif
 
-    do_blocking_move_to_xy(1.5f * mlx * x_axis_home_dir, 1.5f * mly * home_dir.Y, fr_mm_s);
+    do_blocking_move_to_xy(1.5f * data.base_max_pos[X_AXIS] * x_axis_home_dir, 1.5f * data.base_max_pos[Y_AXIS] * home_dir.Y, fr_mm_s);
 
     endstops.validate_homing_move();
 
@@ -1318,7 +1326,7 @@ void Cartesian_Mechanics::homeaxis(const AxisEnum axis) {
       destination[Y_AXIS] -= probe.data.offset[Y_AXIS];
     #endif
 
-    if (mechanics.position_is_reachable(destination[X_AXIS], destination[Y_AXIS])) {
+    if (position_is_reachable(destination[X_AXIS], destination[Y_AXIS])) {
 
       #if ENABLED(DEBUG_FEATURE)
         if (printer.debugFeature()) DEBUG_POS("Z_SAFE_HOMING", destination);
@@ -1377,7 +1385,7 @@ void Cartesian_Mechanics::homeaxis(const AxisEnum axis) {
       destination[Y_AXIS] -= probe.data.offset[Y_AXIS];
     #endif
 
-    if (mechanics.position_is_reachable(destination[X_AXIS], destination[Y_AXIS])) {
+    if (position_is_reachable(destination[X_AXIS], destination[Y_AXIS])) {
 
       #if ENABLED(DEBUG_FEATURE)
         if (printer.debugFeature()) DEBUG_POS("DOUBLE_Z_HOMING", destination);
@@ -1386,7 +1394,7 @@ void Cartesian_Mechanics::homeaxis(const AxisEnum axis) {
       const float newzero = probe_pt(destination[X_AXIS], destination[Y_AXIS], true, 1) - (2 * probe.data.offset[Z_AXIS]);
       current_position[Z_AXIS] -= newzero;
       destination[Z_AXIS] = current_position[Z_AXIS];
-      endstops.soft_endstop_max[Z_AXIS] = base_max_pos(Z_AXIS) - newzero;
+      endstops.soft_endstop_max[Z_AXIS] = data.base_max_pos(Z_AXIS) - newzero;
 
       sync_plan_position();
       do_blocking_move_to_z(MIN_Z_HEIGHT_FOR_HOMING);

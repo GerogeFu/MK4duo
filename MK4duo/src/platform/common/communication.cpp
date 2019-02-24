@@ -42,7 +42,7 @@ FSTRINGVALUE(REQUESTCONTINUE, "RequestContinue:");
 FSTRINGVALUE(REQUESTSTOP, "RequestStop:");
 
 /** Public Parameters */
-int8_t Com::serial_port = -1;
+int8_t Com::serial_port_index = -1;
 
 /** Public Function */
 void Com::setBaudrate() {
@@ -57,9 +57,9 @@ void Com::setBaudrate() {
 }
 
 void Com::serialFlush() {
-  if (serial_port == -1 || serial_port == 0) MKSERIAL1.flush();
+  if (serial_port_index == -1 || serial_port_index == 0) MKSERIAL1.flush();
   #if NUM_SERIAL > 1
-    if (serial_port == -1 || serial_port == 1) MKSERIAL2.flush();
+    if (serial_port_index == -1 || serial_port_index == 1) MKSERIAL2.flush();
   #endif
 }
 
@@ -94,25 +94,25 @@ bool Com::serialDataAvailable(const uint8_t index) {
 // Functions for serial printing from PROGMEM. (Saves loads of SRAM.)
 void Com::printPGM(PGM_P str) {
   while (char c = pgm_read_byte(str++)) {
-    if (serial_port == -1 || serial_port == 0) MKSERIAL1.write(c);
+    if (serial_port_index == -1 || serial_port_index == 0) MKSERIAL1.write(c);
     #if NUM_SERIAL > 1
-      if (serial_port == -1 || serial_port == 1) MKSERIAL2.write(c);
+      if (serial_port_index == -1 || serial_port_index == 1) MKSERIAL2.write(c);
     #endif
   }
 }
 
 void Com::write(const uint8_t c) {
-  if (serial_port == -1 || serial_port == 0) MKSERIAL1.write(c);
+  if (serial_port_index == -1 || serial_port_index == 0) MKSERIAL1.write(c);
   #if NUM_SERIAL > 1
-    if (serial_port == -1 || serial_port == 1) MKSERIAL2.write(c);
+    if (serial_port_index == -1 || serial_port_index == 1) MKSERIAL2.write(c);
   #endif
 }
 
 void Com::write(const char* str) {
   while (*str) {
-    if (serial_port == -1 || serial_port == 0) MKSERIAL1.write(*str);
+    if (serial_port_index == -1 || serial_port_index == 0) MKSERIAL1.write(*str);
     #if NUM_SERIAL > 1
-    if (serial_port == -1 || serial_port == 1) MKSERIAL2.write(*str);
+    if (serial_port_index == -1 || serial_port_index == 1) MKSERIAL2.write(*str);
     #endif
     str++;
   }
@@ -120,9 +120,9 @@ void Com::write(const char* str) {
 
 void Com::write(const uint8_t* buffer, size_t size) {
   while (size--) {
-    if (serial_port == -1 || serial_port == 0) MKSERIAL1.write(*buffer);
+    if (serial_port_index == -1 || serial_port_index == 0) MKSERIAL1.write(*buffer);
     #if NUM_SERIAL > 1
-      if (serial_port == -1 || serial_port == 1) MKSERIAL2.write(*buffer);
+      if (serial_port_index == -1 || serial_port_index == 1) MKSERIAL2.write(*buffer);
     #endif
     buffer++;
   }
@@ -130,9 +130,9 @@ void Com::write(const uint8_t* buffer, size_t size) {
 
 void Com::print(const String& s) {
   for (int i = 0; i < (int)s.length(); i++) {
-    if (serial_port == -1 || serial_port == 0) MKSERIAL1.write(s[i]);
+    if (serial_port_index == -1 || serial_port_index == 0) MKSERIAL1.write(s[i]);
     #if NUM_SERIAL > 1
-      if (serial_port == -1 || serial_port == 1) MKSERIAL2.write(s[i]);
+      if (serial_port_index == -1 || serial_port_index == 1) MKSERIAL2.write(s[i]);
     #endif
   }
 }
@@ -184,9 +184,9 @@ void Com::println(void) {
 void Com::print_spaces(uint8_t count) {
   count *= (PROPORTIONAL_FONT_RATIO);
   while (count--) {
-    if (serial_port == -1 || serial_port == 0) MKSERIAL1.write(' ');
+    if (serial_port_index == -1 || serial_port_index == 0) MKSERIAL1.write(' ');
     #if NUM_SERIAL > 1
-      if (serial_port == -1 || serial_port == 1) MKSERIAL2.write(' ');
+      if (serial_port_index == -1 || serial_port_index == 1) MKSERIAL2.write(' ');
     #endif
   }
 }

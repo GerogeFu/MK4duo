@@ -642,7 +642,7 @@ void Nextion_draw_update() {
           #if MECH(DELTA)
             gfx_clear(mechanics.data.print_radius * 2, mechanics.data.print_radius * 2, mechanics.data.height);
           #else
-            gfx_clear(X_MAX_POS, Y_MAX_POS, Z_MAX_POS);
+            gfx_clear(X_MAX_BED, Y_MAX_BED, Z_MAX_BED);
           #endif
         #endif
       }
@@ -884,20 +884,20 @@ void Nextion_draw_update() {
 
   }
 
-  inline static void nextion_put_space(const uint8_t row, const uint8_t max_length) {
-    for (uint8_t i = 0; i < max_length; i++)
+  inline static void nextion_put_space(const uint8_t row, const uint8_t max_lengt) {
+    for (uint8_t i = 0; i < max_lengt; i++)
       nexlcd.setChar(' ');
   }
 
-  inline static void nextion_put_str_P(const uint8_t row, PGM_P str, const uint8_t max_length) {
-    for (uint8_t i = 0; i < max_length; i++) {
+  inline static void nextion_put_str_P(const uint8_t row, PGM_P str, const uint8_t max_lengt) {
+    for (uint8_t i = 0; i < max_lengt; i++) {
       char ch = pgm_read_byte(str++);
       nexlcd.setChar(ch);
     }
   }
 
-  inline static void nextion_put_str(const uint8_t row, const char * str, const uint8_t max_length) {
-    for (uint8_t i = 0; i < max_length; i++)
+  inline static void nextion_put_str(const uint8_t row, const char * str, const uint8_t max_lengt) {
+    for (uint8_t i = 0; i < max_lengt; i++)
       nexlcd.setChar(*str++);
   }
 

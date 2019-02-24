@@ -440,11 +440,11 @@
                * Until that is decided, this can be forced with the X and Y parameters.
                */
               #if IS_KINEMATIC
-                g29_x_pos = X_HOME_POS;
-                g29_y_pos = Y_HOME_POS;
+                g29_x_pos = 0;
+                g29_y_pos = 0;
               #else // cartesian
-                g29_x_pos = probe.data.offset[X_AXIS] > 0 ? X_BED_SIZE : 0;
-                g29_y_pos = probe.data.offset[Y_AXIS] < 0 ? Y_BED_SIZE : 0;
+                g29_x_pos = probe.data.offset[X_AXIS] > 0 ? X_MAX_BED : 0;
+                g29_y_pos = probe.data.offset[Y_AXIS] < 0 ? Y_MAX_BED : 0;
               #endif
             }
 

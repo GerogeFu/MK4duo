@@ -35,8 +35,8 @@ flagendstop_t Endstops::flag;
 #if MECH(DELTA)
   float Endstops::soft_endstop_radius_2 = 0.0;
 #else
-  float Endstops::soft_endstop_min[XYZ] = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS },
-        Endstops::soft_endstop_max[XYZ] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
+  float Endstops::soft_endstop_min[XYZ] = { 0.0 },
+        Endstops::soft_endstop_max[XYZ] = { 0.0 };
 #endif
 
 #if ENABLED(X_TWO_ENDSTOPS)
@@ -145,6 +145,15 @@ void Endstops::factory_parameters() {
       (true)
     #endif
   );
+
+  #if NOMECH(DELTA)
+    soft_endstop_min[X_AXIS] = mechanics.data.base_min_pos[X_AXIS];
+    soft_endstop_min[Y_AXIS] = mechanics.data.base_min_pos[Y_AXIS];
+    soft_endstop_min[Z_AXIS] = mechanics.data.base_min_pos[Z_AXIS];
+    soft_endstop_max[X_AXIS] = mechanics.data.base_max_pos[X_AXIS];
+    soft_endstop_max[Y_AXIS] = mechanics.data.base_max_pos[Y_AXIS];
+    soft_endstop_max[Z_AXIS] = mechanics.data.base_max_pos[Z_AXIS];
+  #endif
 
   #if ENABLED(X_TWO_ENDSTOPS)
     x2_endstop_adj = 0.0f;
@@ -616,18 +625,18 @@ void Endstops::clamp_to_software(float target[XYZ]) {
         else if (mechanics.dxc_is_duplicating()) {
           // In Duplication Mode, T0 can move as far left as X_MIN_POS
           // but not so far to the right that T1 would move past the end
-          soft_endstop_min[X_AXIS] = mechanics.base_min_pos[X_AXIS];
-          soft_endstop_max[X_AXIS] = MIN(mechanics.base_max_pos[X_AXIS], dual_max_x - mechanics.duplicate_extruder_x_offset);
+          soft_endstop_min[X_AXIS] = mechanics.data.base_min_pos[X_AXIS];
+          soft_endstop_max[X_AXIS] = MIN(mechanics.data.base_max_pos[X_AXIS], dual_max_x - mechanics.duplicate_extruder_x_offset);
         }
         else {
           // In other modes, T0 can move from X_MIN_POS to X_MAX_POS
-          soft_endstop_min[axis] = mechanics.base_min_pos[axis];
-          soft_endstop_max[axis] = mechanics.base_max_pos[axis];
+          soft_endstop_min[axis] = mechanics.data.base_min_pos[axis];
+          soft_endstop_max[axis] = mechanics.data.base_max_pos[axis];
         }
       }
     #else
-      soft_endstop_min[axis] = mechanics.base_min_pos[axis];
-      soft_endstop_max[axis] = mechanics.base_max_pos[axis];
+      soft_endstop_min[axis] = mechanics.data.base_min_pos[axis];
+      soft_endstop_max[axis] = mechanics.data.base_max_pos[axis];
     #endif
 
     #if ENABLED(DEBUG_FEATURE)

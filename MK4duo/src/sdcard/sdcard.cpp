@@ -30,8 +30,8 @@
   flagcard_t  SDCard::flag;
 
   SdFat       SDCard::fat;
-  SdFile      SDCard::gcode_file;
-  SdBaseFile  SDCard::root,
+  SdFile      SDCard::gcode_file,
+              SDCard::root,
               SDCard::workDir,
               SDCard::workDirParents[SD_MAX_FOLDER_DEPTH];
 
@@ -45,8 +45,8 @@
         SDCard::layerHeight       = 0.0,
         SDCard::filamentNeeded    = 0.0;
 
-  char  SDCard::fileName[LONG_FILENAME_LENGTH],
-        SDCard::tempLongFilename[LONG_FILENAME_LENGTH + 1],
+  char  SDCard::fileName[LONG_FILENAME_LENGTH*SD_MAX_FOLDER_DEPTH+SD_MAX_FOLDER_DEPTH+1],
+        SDCard::tempLongFilename[LONG_FILENAME_LENGTH+1],
         SDCard::generatedBy[GENBY_SIZE];
 
   /** Private Parameters */
@@ -104,26 +104,72 @@
 
   #endif // SDCARD_SORT_ALPHA
 
+  #if ENABLED(ADVANCED_SD_COMMAND)
+
+    Sd2Card   SDCard::sd;
+
+    uint32_t  SDCard::cardSizeBlocks,
+              SDCard::cardCapacityMB;
+
+    // Cache for SD block
+    cache_t   SDCard::cache;
+
+    // MBR information
+    uint8_t   SDCard::partType;
+    uint32_t  SDCard::relSector,
+              SDCard::partSize;
+
+    // Fake disk geometry
+    uint8_t   SDCard::numberOfHeads,
+              SDCard::sectorsPerTrack;
+
+    // FAT parameters
+    uint16_t  SDCard::reservedSectors;
+    uint8_t   SDCard::sectorsPerCluster;
+    uint32_t  SDCard::fatStart,
+              SDCard::fatSize,
+              SDCard::dataStart;
+
+  #endif
+
   /** Public Function */
 
   void SDCard::mount() {
     setDetect(false);
     if (root.isOpen()) root.close();
 
-    if (!fat.begin(SDSS, SPI_SPEED)
+    if (!fat.begin(SDSS, SD_SCK_MHZ(4))
       #if ENABLED(LCD_SDSS) && (LCD_SDSS != SDSS)
-        && !fat.begin(LCD_SDSS, SPI_SPEED)
+        && !fat.begin(LCD_SDSS, SD_SCK_MHZ(4))
       #endif
     ) {
       SERIAL_LM(ER, MSG_SD_INIT_FAIL);
+      if (fat.card()->errorCode()) {
+        SERIAL_MV("SD initialization failed.\n"
+                  "Do not reformat the card!\n"
+                  "Is the card correctly inserted?\n"
+                  "Is chipSelect set to the correct value?\n"
+                  "Does another SPI device need to be disabled?\n"
+                  "Is there a wiring/soldering problem?\n"
+                  "errorCode: ", int(fat.card()->errorCode())
+                  );
+        return;
+      }
+      if (fat.vol()->fatType() == 0) {
+        SERIAL_MSG("Can't find a valid FAT16/FAT32 partition.\n");
+        return;
+      }
+      if (!fat.vwd()->isOpen()) {
+        SERIAL_MSG("Can't open root directory.\n");
+        return;
+      }
+      return;
     }
     else {
       setDetect(true);
       SERIAL_EM(MSG_SD_CARD_OK);
     }
-    fat.chdir(true);
-    root = *fat.vwd();
-    setroot();
+    fat.chdir();
 
     lcdui.refresh();
   }
@@ -133,7 +179,8 @@
     setSDprinting(false);
   }
 
-  void SDCard::ls()  {
+  void SDCard::ls() {
+    fat.chdir();
     root.openRoot(fat.vol());
     root.ls();
     workDir = root;
@@ -153,20 +200,19 @@
         return;
       }
     #endif // SDSORT_CACHE_NAMES
-    SdBaseFile *curDir = &workDir;
     lsAction = LS_GetFilename;
     nrFile_index = nr;
-    curDir->rewind();
-    lsDive(*curDir, match);
+    lsDive(workDir, match);
   }
 
   void SDCard::getAbsFilename(char* name) {
+
     *name++ = '/';
     uint8_t cnt = 1;
     uint8_t i = 0;
 
     for (i = 0; i < workDirDepth; i++) {
-      workDirParents[i].getFilename(name);
+      workDirParents[i].getName(name, LONG_FILENAME_LENGTH);
       while (*name && cnt < MAX_PATH_NAME_LENGHT) { name++; cnt++; }
       if (cnt < MAX_PATH_NAME_LENGHT) { *name = '/'; name++; cnt++; }
     }
@@ -174,6 +220,7 @@
     i = 0;
     while (fileName[i]) { *name++ = fileName[i]; i++; }
     *name = '\0';
+
   }
 
   void SDCard::startFileprint() {
@@ -203,7 +250,7 @@
     char* npos = 0;
     char* end = buf + strlen(buf) - 1;
 
-    gcode_file.writeError = false;
+    gcode_file.clearWriteError();
     if ((npos = strchr(buf, 'N')) != NULL) {
       begin = strchr(npos, ' ') + 1;
       end = strchr(npos, '*') - 1;
@@ -212,7 +259,7 @@
     end[2] = '\n';
     end[3] = '\0';
     gcode_file.write(begin);
-    if (gcode_file.writeError) {
+    if (gcode_file.getWriteError()) {
       SERIAL_LM(ER, MSG_SD_ERR_WRITE_TO_FILE);
     }
   }
@@ -229,8 +276,8 @@
   void SDCard::startWrite(char *filename, const bool silent/*=false*/) {
     if (!isDetected()) return;
 
-    SdBaseFile *curDir = &workDir;
-    if (!gcode_file.open(curDir, filename, FILE_WRITE)) {
+    fat.chdir();
+    if (!gcode_file.open(filename, FILE_WRITE)) {
       SERIAL_LMT(ER, MSG_SD_OPEN_FILE_FAIL, filename);
     }
     else {
@@ -324,10 +371,8 @@
   }
 
   void SDCard::chdir(PGM_P relpath) {
-    SdBaseFile newDir;
-    SdBaseFile *parent = &root;
-
-    if (workDir.isOpen()) parent = &workDir;
+    SdFile newDir;
+    SdFile *parent = workDir.isOpen() ? &workDir : &root;
 
     if (!newDir.open(parent, relpath, FILE_READ)) {
       SERIAL_LMT(ECHO, MSG_SD_CANT_ENTER_SUBDIR, relpath);
@@ -348,7 +393,7 @@
   }
 
   void SDCard::checkautostart() {
-
+    /*
     if (autostart_index < 0 || isSDprinting()) return;
 
     if (!isDetected()) mount();
@@ -362,7 +407,7 @@
       sprintf_P(autoname, PSTR("auto%i.g"), autostart_index);
       dir_t p;
       root.rewind();
-      while (root.readDir(p) > 0) {
+      while (root.readDir(&p, NULL) > 0) {
         for (int8_t i = (int8_t)strlen((char*)p.name); i--;) p.name[i] = tolower(p.name[i]);
         if (p.name[9] != '~' && strncmp((char*)p.name, autoname, 5) == 0) {
           openAndPrintFile(autoname);
@@ -372,6 +417,7 @@
       }
     }
     autostart_index = -1;
+    */
   }
 
   void SDCard::setroot() {
@@ -404,8 +450,8 @@
 
     if (!isDetected()) return false;
 
-    SdBaseFile *curDir = &workDir;
-    if (gcode_file.open(curDir, filename, FILE_READ)) {
+    gcode_file.close();
+    if (gcode_file.open(&workDir, filename, FILE_READ)) {
       if ((fname = strrchr(filename, '/')) != NULL)
         fname++;
       else
@@ -444,11 +490,9 @@
   }
 
   uint16_t SDCard::getnrfilenames() {
-    SdBaseFile *curDir = &workDir;
     lsAction = LS_Count;
     nrFiles = 0;
-    curDir->rewind();
-    lsDive(*curDir);
+    lsDive(workDir);
     return nrFiles;
   }
 
@@ -480,8 +524,9 @@
       if (exist_restart_file()) {
         restart.file.remove(&root, restart_file_name);
         #if ENABLED(DEBUG_RESTART)
-          SERIAL_MSG("restart delete");
-          SERIAL_PGM(exist_restart_file() ? PSTR(" failed.\n") : PSTR("d.\n"));
+          if (exist_restart_file()) SERIAL_MSG("restart delete failed.");
+          else SERIAL_MSG("restart deleted.");
+          SERIAL_EOL();
         #endif
       }
     }
@@ -729,39 +774,122 @@
 
   #endif // SDCARD_SORT_ALPHA
 
+  #if ENABLED(ADVANCED_SD_COMMAND)
+
+    void SDCard::formatSD() {
+
+      card.unmount();
+
+      if (!sd.begin(SDSS, SD_SCK_MHZ(4))) {
+        SERIAL_LM(ER, "SD initialization failure!");
+        return;
+      }
+
+      cardSizeBlocks = sd.cardSize();
+      if (cardSizeBlocks == 0) {
+        SERIAL_LM(ER, "cardSize");
+        return;
+      }
+
+      cardCapacityMB = (cardSizeBlocks + 2047) / 2048;
+
+      SERIAL_SMV(ECHO, " Card Size:", (int)(1.048576 * cardCapacityMB));
+      SERIAL_EM(" MB, (MB = 1,000,000 bytes)");
+      SERIAL_LM(ECHO, "Formatting... ");
+
+      initSizes();
+
+      if (sd.type() != SD_CARD_TYPE_SDHC) {
+        SERIAL_LM(ECHO, "FAT16");
+        makeFat16();
+      }
+      else {
+        SERIAL_LM(ECHO, "FAT32");
+        makeFat32();
+      }
+
+      SERIAL_LM(ECHO, "Format done.");
+    }
+
+    void SDCard::infoSD() {
+
+      cardSizeBlocks = fat.card()->cardSize();
+      if (cardSizeBlocks == 0) {
+        SERIAL_LM(ER, "cardSize failed");
+        return;
+      }
+
+      SERIAL_SM(ECHO, "SD Card type:");
+      switch (fat.card()->type()) {
+        case SD_CARD_TYPE_SD1:
+          SERIAL_EM("SD1");
+          break;
+        case SD_CARD_TYPE_SD2:
+          SERIAL_EM("SD2");
+          break;
+        case SD_CARD_TYPE_SDHC:
+          if (cardSizeBlocks < 70000000)
+            SERIAL_EM("SDHC");
+          else
+            SERIAL_EM("SDXC");
+          break;
+        default:
+          SERIAL_EM("Unknown");
+      }
+
+      if (!cidDmp()) return;
+      if (!csdDmp()) return;
+
+      volDmp();
+    }
+
+  #endif
+
   /** Private Function */
   /**
    * Dive into a folder and recurse depth-first to perform a pre-set operation lsAction:
    *   LS_Count       - Add +1 to nrFiles for every file within the parent
    *   LS_GetFilename - Get the filename of the file indexed by nrFile_index
    */
-  void SDCard::lsDive(SdBaseFile parent, PGM_P const match/*=NULL*/) {
-    dir_t* p    = NULL;
+  void SDCard::lsDive(SdFile parent, PGM_P const match/*=NULL*/) {
+    //dir_t* p = NULL;
+    SdFile file;
+    parent.rewind();
     uint8_t cnt = 0;
 
     // Read the next entry from a directory
-    while ((p = parent.getLongFilename(p, fileName)) != NULL) {
-      uint8_t pn0 = p->name[0];
-      if (pn0 == DIR_NAME_FREE) break;
+    while (file.openNext(&parent, O_READ)) {
+      file.getName(tempLongFilename, LONG_FILENAME_LENGTH);
 
-      // ignore hidden or deleted files:
-      if (pn0 == DIR_NAME_DELETED || pn0 == '.') continue;
-      if (fileName[0] == '.') continue;
-      if (!DIR_IS_FILE_OR_SUBDIR(p) || (p->attributes & DIR_ATT_HIDDEN)) continue;
+      if (workDirDepth >= SD_MAX_FOLDER_DEPTH && strcmp(tempLongFilename, "..") == 0) {
+        file.close();
+        continue;
+      }
+      if (tempLongFilename[0] == '.' && tempLongFilename[1] != '.') {
+        file.close();
+        continue; // MAC CRAP
+      }
 
-      setFilenameIsDir(DIR_IS_SUBDIR(p));
+      setFilenameIsDir(file.isDir());
 
-      if (!isFilenameIsDir() && (p->name[8] != 'G' || p->name[9] == '~')) continue;
       switch (lsAction) {
         case LS_Count:
           nrFiles++;
+          file.close();
           break;
         case LS_GetFilename:
-          if (match != NULL) {
-            if (strcasecmp(match, fileName) == 0) return;
+          if (match != NULL && strcasecmp(match, tempLongFilename) == 0) {
+            strcpy(fileName, tempLongFilename);
+            file.close();
+            return;
           }
-          else if (cnt == nrFile_index) return;
+          else if (cnt == nrFile_index) {
+            strcpy(fileName, tempLongFilename);
+            file.close();
+            return;
+          }
           cnt++;
+          file.close();
           break;
       }
 
@@ -992,5 +1120,354 @@
     }
     return false;
   }
+
+  #if ENABLED(ADVANCED_SD_COMMAND)
+
+    uint8_t SDCard::cidDmp() {
+      cid_t cid;
+      if (!fat.card()->readCID(&cid)) {
+        SERIAL_LM(ER, "readCID failed");
+        return false;
+      }
+
+      SERIAL_LMV(ECHO, "Manufacturer ID:", int(cid.mid));
+      SERIAL_SM(ECHO, "OEM ID:");
+      SERIAL_VAL(cid.oid[0]);
+      SERIAL_VAL(cid.oid[1]);
+      SERIAL_EOL();
+
+      SERIAL_SM(ECHO, "Product:");
+      for (uint8_t i = 0; i < 5; i++) SERIAL_VAL(cid.pnm[i]);
+      SERIAL_EOL();
+
+      SERIAL_SM(ECHO, "Version:");
+      SERIAL_VAL(int(cid.prv_n));
+      SERIAL_CHR('.');
+      SERIAL_VAL(int(cid.prv_m));
+      SERIAL_EOL();
+
+      SERIAL_SM(ECHO, "Serial number:");
+      SERIAL_VAL(cid.psn);
+      SERIAL_EOL();
+
+      SERIAL_SM(ECHO, "Manufacturing date:");
+      SERIAL_VAL(int(cid.mdt_month));
+      SERIAL_CHR('/');
+      SERIAL_VAL(2000 + cid.mdt_year_low + 10 * cid.mdt_year_high);
+      SERIAL_EOL();
+
+      return true;
+    }
+
+    uint8_t SDCard::csdDmp() {
+      csd_t csd;
+      uint32_t eraseSize;
+      if (!fat.card()->readCSD(&csd)) {
+        SERIAL_LM(ER, "readCSD failed");
+        return false;
+      }
+
+      if (csd.v1.csd_ver == 0)
+        eraseSize = (csd.v1.sector_size_high << 1) | csd.v1.sector_size_low;
+      else if (csd.v2.csd_ver == 1)
+        eraseSize = (csd.v2.sector_size_high << 1) | csd.v2.sector_size_low;
+      else {
+        SERIAL_LM(ER, "csd version error\n");
+        return false;
+      }
+
+      eraseSize++;
+      SERIAL_SMV(ECHO, "CardSize:", int(0.000512 * cardSizeBlocks));
+      SERIAL_EM(" MB (MB = 1,000,000 bytes)");
+
+      SERIAL_SM(ECHO, "flashEraseSize:");
+      SERIAL_VAL(int(eraseSize));
+      SERIAL_MSG(" blocks");
+      SERIAL_EOL();
+
+      return true;
+    }
+
+    void SDCard::volDmp() {
+      SERIAL_LMV(ECHO, "Volume is FAT", int(fat.vol()->fatType()));
+      SERIAL_LMV(ECHO, "blocksPerCluster:", int(fat.vol()->blocksPerCluster()));
+      SERIAL_LMV(ECHO, "clusterCount:", fat.vol()->clusterCount());
+      SERIAL_SM(ECHO, "freeClusters:");
+      uint32_t volFree = fat.vol()->freeClusterCount();
+      SERIAL_VAL(volFree);
+      SERIAL_EOL();
+      uint32_t fs = 0.000512 * volFree * fat.vol()->blocksPerCluster();
+      SERIAL_SMV(ECHO, "freeSpace:", fs);
+      SERIAL_MSG(" MB (MB = 1,000,000 bytes)");
+      SERIAL_EOL();
+    }
+
+    void SDCard::initSizes() {
+      if (cardCapacityMB <= 6) {
+        SERIAL_LM(ER, "Card is too small.");
+      } else if (cardCapacityMB <= 16) {
+        sectorsPerCluster = 2;
+      } else if (cardCapacityMB <= 32) {
+        sectorsPerCluster = 4;
+      } else if (cardCapacityMB <= 64) {
+        sectorsPerCluster = 8;
+      } else if (cardCapacityMB <= 128) {
+        sectorsPerCluster = 16;
+      } else if (cardCapacityMB <= 1024) {
+        sectorsPerCluster = 32;
+      } else if (cardCapacityMB <= 32768) {
+        sectorsPerCluster = 64;
+      } else {
+        // SDXC cards
+        sectorsPerCluster = 128;
+      }
+
+      SERIAL_LMV(ECHO, "Blocks/Cluster:", int(sectorsPerCluster));
+
+      // set fake disk geometry
+      sectorsPerTrack = cardCapacityMB <= 256 ? 32 : 63;
+
+      if (cardCapacityMB <= 16) {
+        numberOfHeads = 2;
+      } else if (cardCapacityMB <= 32) {
+        numberOfHeads = 4;
+      } else if (cardCapacityMB <= 128) {
+        numberOfHeads = 8;
+      } else if (cardCapacityMB <= 504) {
+        numberOfHeads = 16;
+      } else if (cardCapacityMB <= 1008) {
+        numberOfHeads = 32;
+      } else if (cardCapacityMB <= 2016) {
+        numberOfHeads = 64;
+      } else if (cardCapacityMB <= 4032) {
+        numberOfHeads = 128;
+      } else {
+        numberOfHeads = 255;
+      }
+    }
+
+    void SDCard::clearCache(uint8_t addSig) {
+      memset(&cache, 0, sizeof(cache));
+      if (addSig) {
+        cache.mbr.mbrSig0 = BOOTSIG0;
+        cache.mbr.mbrSig1 = BOOTSIG1;
+      }
+    }
+
+    void SDCard::clearFatDir(uint32_t bgn, uint32_t count) {
+      clearCache(false);
+      if (!sd.writeStart(bgn, count)) {
+        SERIAL_LM(ER, "Clear FAT/DIR writeStart failed");
+      }
+      for (uint32_t i = 0; i < count; i++) {
+        if (!sd.writeData(cache.data)) {
+          SERIAL_LM(ER, "Clear FAT/DIR writeData failed");
+        }
+      }
+      if (!sd.writeStop()) {
+        SERIAL_LM(ER, "Clear FAT/DIR writeStop failed");
+      }
+    }
+
+    void SDCard::writeMbr() {
+      clearCache(true);
+      part_t* p = cache.mbr.part;
+      p->boot = 0;
+      uint16_t c = lbnToCylinder(relSector);
+      if (c > 1023) {
+        SERIAL_EM("MBR CHS");
+      }
+      p->beginCylinderHigh = c >> 8;
+      p->beginCylinderLow = c & 0XFF;
+      p->beginHead = lbnToHead(relSector);
+      p->beginSector = lbnToSector(relSector);
+      p->type = partType;
+      uint32_t endLbn = relSector + partSize - 1;
+      c = lbnToCylinder(endLbn);
+      if (c <= 1023) {
+        p->endCylinderHigh = c >> 8;
+        p->endCylinderLow = c & 0XFF;
+        p->endHead = lbnToHead(endLbn);
+        p->endSector = lbnToSector(endLbn);
+      } else {
+        // Too big flag, c = 1023, h = 254, s = 63
+        p->endCylinderHigh = 3;
+        p->endCylinderLow = 255;
+        p->endHead = 254;
+        p->endSector = 63;
+      }
+      p->firstSector = relSector;
+      p->totalSectors = partSize;
+      if (!writeCache(0)) {
+        SERIAL_EM("write MBR");
+      }
+    }
+
+    void SDCard::makeFat16() {
+
+      char sdName[]   = "PRINTER3D";
+      char fat16str[] = "FAT16   ";
+      uint32_t nc;
+
+      for (dataStart = 2 * BU16;; dataStart += BU16) {
+        nc = (cardSizeBlocks - dataStart) / sectorsPerCluster;
+        fatSize = (nc + 2 + 255)/256;
+        uint32_t r = BU16 + 1 + 2 * fatSize + 32;
+        if (dataStart < r) {
+          continue;
+        }
+        relSector = dataStart - r + BU16;
+        break;
+      }
+      // check valid cluster count for FAT16 volume
+      if (nc < 4085 || nc >= 65525) {
+        SERIAL_EM("Bad cluster count");
+      }
+      reservedSectors = 1;
+      fatStart = relSector + reservedSectors;
+      partSize = nc * sectorsPerCluster + 2 * fatSize + reservedSectors + 32;
+      if (partSize < 32680) {
+        partType = 0X01;
+      } else if (partSize < 65536) {
+        partType = 0X04;
+      } else {
+        partType = 0X06;
+      }
+      // write MBR
+      writeMbr();
+      clearCache(true);
+      fat_boot_t* pb = &cache.fbs;
+      pb->jump[0] = 0XEB;
+      pb->jump[1] = 0X00;
+      pb->jump[2] = 0X90;
+      for (uint8_t i = 0; i < sizeof(pb->oemId); i++) {
+        pb->oemId[i] = ' ';
+      }
+      pb->bytesPerSector = 512;
+      pb->sectorsPerCluster = sectorsPerCluster;
+      pb->reservedSectorCount = reservedSectors;
+      pb->fatCount = 2;
+      pb->rootDirEntryCount = 512;
+      pb->mediaType = 0XF8;
+      pb->sectorsPerFat16 = fatSize;
+      pb->sectorsPerTrack = sectorsPerTrack;
+      pb->headCount = numberOfHeads;
+      pb->hidddenSectors = relSector;
+      pb->totalSectors32 = partSize;
+      pb->driveNumber = 0X80;
+      pb->bootSignature = EXTENDED_BOOT_SIG;
+      pb->volumeSerialNumber = volSerialNumber();
+      memcpy(pb->volumeLabel, sdName, sizeof(pb->volumeLabel));
+      memcpy(pb->fileSystemType, fat16str, sizeof(pb->fileSystemType));
+      // write partition boot sector
+      if (!writeCache(relSector)) {
+        SERIAL_EM("FAT16 write PBS failed");
+      }
+      // clear FAT and root directory
+      clearFatDir(fatStart, dataStart - fatStart);
+      clearCache(false);
+      cache.fat16[0] = 0XFFF8;
+      cache.fat16[1] = 0XFFFF;
+      // write first block of FAT and backup for reserved clusters
+      if (!writeCache(fatStart)
+          || !writeCache(fatStart + fatSize)) {
+        SERIAL_EM("FAT16 reserve failed");
+      }
+    }
+
+    // format the SD as FAT32
+    void SDCard::makeFat32() {
+
+      char sdName[]   = "PRINTER3D";
+      char fat32str[] = "FAT32   ";
+      uint32_t nc;
+
+      relSector = BU32;
+      for (dataStart = 2 * BU32;; dataStart += BU32) {
+        nc = (cardSizeBlocks - dataStart)/sectorsPerCluster;
+        fatSize = (nc + 2 + 127)/128;
+        uint32_t r = relSector + 9 + 2 * fatSize;
+        if (dataStart >= r) {
+          break;
+        }
+      }
+      // error if too few clusters in FAT32 volume
+      if (nc < 65525) {
+        SERIAL_EM("Bad cluster count");
+      }
+      reservedSectors = dataStart - relSector - 2 * fatSize;
+      fatStart = relSector + reservedSectors;
+      partSize = nc * sectorsPerCluster + dataStart - relSector;
+      // type depends on address of end sector
+      // max CHS has lbn = 16450560 = 1024*255*63
+      if ((relSector + partSize) <= 16450560) {
+        // FAT32
+        partType = 0X0B;
+      } else {
+        // FAT32 with INT 13
+        partType = 0X0C;
+      }
+      writeMbr();
+      clearCache(true);
+
+      fat32_boot_t* pb = &cache.fbs32;
+      pb->jump[0] = 0XEB;
+      pb->jump[1] = 0X00;
+      pb->jump[2] = 0X90;
+      for (uint8_t i = 0; i < sizeof(pb->oemId); i++) {
+        pb->oemId[i] = ' ';
+      }
+      pb->bytesPerSector = 512;
+      pb->sectorsPerCluster = sectorsPerCluster;
+      pb->reservedSectorCount = reservedSectors;
+      pb->fatCount = 2;
+      pb->mediaType = 0XF8;
+      pb->sectorsPerTrack = sectorsPerTrack;
+      pb->headCount = numberOfHeads;
+      pb->hidddenSectors = relSector;
+      pb->totalSectors32 = partSize;
+      pb->sectorsPerFat32 = fatSize;
+      pb->fat32RootCluster = 2;
+      pb->fat32FSInfo = 1;
+      pb->fat32BackBootBlock = 6;
+      pb->driveNumber = 0X80;
+      pb->bootSignature = EXTENDED_BOOT_SIG;
+      pb->volumeSerialNumber = volSerialNumber();
+      memcpy(pb->volumeLabel, sdName, sizeof(pb->volumeLabel));
+      memcpy(pb->fileSystemType, fat32str, sizeof(pb->fileSystemType));
+      // write partition boot sector and backup
+      if (!writeCache(relSector)
+          || !writeCache(relSector + 6)) {
+        SERIAL_EM("FAT32 write PBS failed");
+      }
+      clearCache(true);
+      // write extra boot area and backup
+      if (!writeCache(relSector + 2)
+          || !writeCache(relSector + 8)) {
+        SERIAL_EM("FAT32 PBS ext failed");
+      }
+      fat32_fsinfo_t* pf = &cache.fsinfo;
+      pf->leadSignature = FSINFO_LEAD_SIG;
+      pf->structSignature = FSINFO_STRUCT_SIG;
+      pf->freeCount = 0XFFFFFFFF;
+      pf->nextFree = 0XFFFFFFFF;
+      // write FSINFO sector and backup
+      if (!writeCache(relSector + 1)
+          || !writeCache(relSector + 7)) {
+        SERIAL_EM("FAT32 FSINFO failed");
+      }
+      clearFatDir(fatStart, 2 * fatSize + sectorsPerCluster);
+      clearCache(false);
+      cache.fat32[0] = 0x0FFFFFF8;
+      cache.fat32[1] = 0x0FFFFFFF;
+      cache.fat32[2] = 0x0FFFFFFF;
+      // write first block of FAT and backup for reserved clusters
+      if (!writeCache(fatStart)
+          || !writeCache(fatStart + fatSize)) {
+        SERIAL_EM("FAT32 reserve failed");
+      }
+    }
+
+  #endif // ADVANCED_SD_COMMAND
 
 #endif //SDSUPPORT

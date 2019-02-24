@@ -29,7 +29,13 @@
 #pragma once
 
 // Struct Cartesian Settings
-typedef struct : public generic_data_t {} mechanics_data_t;
+typedef struct : public generic_data_t {
+
+  float base_max_pos[XYZ],
+        base_min_pos[XYZ],
+        base_home_pos[XYZ];
+
+} mechanics_data_t;
 
 class Cartesian_Mechanics : public Mechanics {
 
@@ -40,11 +46,6 @@ class Cartesian_Mechanics : public Mechanics {
   public: /** Public Parameters */
 
     static mechanics_data_t data;
-
-    static const float  base_max_pos[XYZ],
-                        base_min_pos[XYZ],
-                        base_home_pos[XYZ],
-                        max_length[XYZ];
 
     #if ENABLED(DUAL_X_CARRIAGE)
       static DualXModeEnum  dual_x_carriage_mode;

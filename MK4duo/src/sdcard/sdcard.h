@@ -23,7 +23,7 @@
 
 #if HAS_SD_SUPPORT
 
-  #include "sdfat/SdFat.h"
+  #include "SdFat/SdFat.h"
 
   union flagcard_t {
     bool all;
@@ -51,8 +51,8 @@
       static flagcard_t flag;
 
       static SdFat      fat;
-      static SdFile     gcode_file;
-      static SdBaseFile root,
+      static SdFile     gcode_file,
+                        root,
                         workDir,
                         workDirParents[SD_MAX_FOLDER_DEPTH];
 
@@ -66,8 +66,8 @@
                     layerHeight,
                     filamentNeeded;
 
-      static char fileName[LONG_FILENAME_LENGTH],
-                  tempLongFilename[LONG_FILENAME_LENGTH + 1],
+      static char fileName[LONG_FILENAME_LENGTH*SD_MAX_FOLDER_DEPTH+SD_MAX_FOLDER_DEPTH+1],
+                  tempLongFilename[LONG_FILENAME_LENGTH+1],
                   generatedBy[GENBY_SIZE];
 
     private: /** Private Parameters */
@@ -130,6 +130,40 @@
         #endif // SDSORT_USES_RAM
 
       #endif // SDCARD_SORT_ALPHA
+
+      #if ENABLED(ADVANCED_SD_COMMAND)
+
+        static Sd2Card  sd;
+
+        static uint32_t cardSizeBlocks,
+                        cardCapacityMB;
+
+        // Cache for SD block
+        static cache_t  cache;
+
+        // MBR information
+        static uint8_t  partType;
+        static uint32_t relSector,
+                        partSize;
+
+        // Fake disk geometry
+        static uint8_t  numberOfHeads,
+                        sectorsPerTrack;
+
+        // FAT parameters
+        static uint16_t reservedSectors;
+        static uint8_t  sectorsPerCluster;
+        static uint32_t fatStart,
+                        fatSize,
+                        dataStart;
+
+        // constants for file system structure
+        static uint16_t const BU16 = 128,
+                              BU32 = 8192;
+
+        static const uint32_t ERASE_SIZE = 262144L;
+
+      #endif // ADVANCED_SD_COMMAND
 
     public: /** Public Function */
 
@@ -221,13 +255,20 @@
       static inline bool eof() { return sdpos >= fileSize; }
       static inline int16_t get() { sdpos = gcode_file.curPosition(); return (int16_t)gcode_file.read(); }
       static inline uint8_t percentDone() { return (isFileOpen() && fileSize) ? sdpos / ((fileSize + 99) / 100) : 0; }
-      static inline char* getWorkDirName() { workDir.getFilename(fileName); return fileName; }
+      static inline void getWorkDirName() { workDir.getName(fileName, LONG_FILENAME_LENGTH); }
       static inline size_t read(void* buf, uint16_t nbyte) { return gcode_file.isOpen() ? gcode_file.read(buf, nbyte) : -1; }
       static inline size_t write(void* buf, uint16_t nbyte) { return gcode_file.isOpen() ? gcode_file.write(buf, nbyte) : -1; }
 
+      #if ENABLED(ADVANCED_SD_COMMAND)
+        // Format SD Card
+        static void formatSD();
+        // Info SD Card
+        static void infoSD();
+      #endif
+
     private: /** Private Function */
 
-      static void lsDive(SdBaseFile parent, PGM_P const match = NULL);
+      static void lsDive(SdFile parent, PGM_P const match = NULL);
       static void parsejson(SdBaseFile &parser_file);
       static bool findGeneratedBy(char* buf, char* genBy);
       static bool findFirstLayerHeight(char* buf, float &firstlayerHeight);
@@ -237,6 +278,53 @@
 
       #if ENABLED(SDCARD_SORT_ALPHA)
         static void flush_presort();
+      #endif
+
+      #if ENABLED(ADVANCED_SD_COMMAND)
+
+        // write cached block to the card
+        static uint8_t writeCache(uint32_t lbn) {
+          return sd.writeBlock(lbn, cache.data);
+        }
+        // return cylinder number for a logical block number
+        static uint16_t lbnToCylinder(uint32_t lbn) {
+          return lbn / (numberOfHeads * sectorsPerTrack);
+        }
+        // return head number for a logical block number
+        static uint8_t lbnToHead(uint32_t lbn) {
+          return (lbn % (numberOfHeads * sectorsPerTrack)) / sectorsPerTrack;
+        }
+        // return sector number for a logical block number
+        static uint8_t lbnToSector(uint32_t lbn) {
+          return (lbn % sectorsPerTrack) + 1;
+        }
+        // generate serial number from card size and micros since boot
+        static uint32_t volSerialNumber() {
+          return (cardSizeBlocks << 8) + micros();
+        }
+
+        // Info SD Card
+        static uint8_t cidDmp();
+        static uint8_t csdDmp();
+        static void volDmp();
+
+        // initialize appropriate sizes for SD capacity
+        static void initSizes();
+
+        // zero cache and optionally set the sector signature
+        static void clearCache(uint8_t addSig);
+
+        // zero FAT and root dir area on SD
+        static void clearFatDir(uint32_t bgn, uint32_t count);
+
+        // format and write the Master Boot Record
+        static void writeMbr();
+
+        // format the SD as FAT16
+        static void makeFat16();
+        // format the SD as FAT32
+        static void makeFat32();
+
       #endif
 
   };

@@ -137,7 +137,7 @@
               (int)(0.1250000000 * mechanics.data.probe_radius),
               (int)(0.3333333333 * mechanics.data.probe_radius)
             #else
-              5, (int)(0.125 * MIN(X_MAX_LENGTH, Y_MAX_LENGTH))
+              5, (int)(0.125 * MIN(X_MAX_BED, Y_MAX_BED))
             #endif
           );
 
@@ -184,8 +184,8 @@
                 }
               }
             #else
-              X_current = constrain(X_current, X_MIN_POS, X_MAX_POS);
-              Y_current = constrain(Y_current, Y_MIN_POS, Y_MAX_POS);
+              X_current = constrain(X_current, X_MIN_BED, X_MAX_BED);
+              Y_current = constrain(Y_current, Y_MIN_BED, Y_MAX_BED);
             #endif
             if (verbose_level > 3) {
               SERIAL_MSG("Going to:");

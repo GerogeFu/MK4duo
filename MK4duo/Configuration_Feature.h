@@ -811,7 +811,7 @@
 //#define DUAL_X_CARRIAGE
 
 #define X1_MIN_POS X_MIN_POS    // set minimum to ensure first x-carriage doesn't hit the parked second X-carriage
-#define X1_MAX_POS X_BED_SIZE   // set maximum to ensure first x-carriage doesn't hit the parked second X-carriage
+#define X1_MAX_POS X_MAX_POS    // set maximum to ensure first x-carriage doesn't hit the parked second X-carriage
 #define X2_MIN_POS 80           // set minimum to ensure second x-carriage doesn't hit the parked first X-carriage
 #define X2_MAX_POS 353          // set maximum to the distance between toolheads when both heads are homed
 #define X2_HOME_DIR 1           // the second X-carriage always homes to the maximum endstop position
@@ -1230,6 +1230,11 @@
  *****************************************************************************************/
 //#define SDSUPPORT
 //#define USB_FLASH_DRIVE_SUPPORT
+
+// Advanced command M39
+// Info and formatting SD card
+// This requires more PROGMEM
+//#define ADVANCED_SD_COMMAND
 
 //
 // SD CARD: SPI SPEED

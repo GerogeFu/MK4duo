@@ -66,7 +66,7 @@ inline void gcode_M701(void) {
 
   // Lift Z axis
   if (park_point.z > 0)
-    mechanics.do_blocking_move_to_z(MIN(mechanics.current_position[Z_AXIS] + park_point.z, Z_MAX_POS), NOZZLE_PARK_Z_FEEDRATE);
+    mechanics.do_blocking_move_to_z(MIN(mechanics.current_position[Z_AXIS] + park_point.z, Z_MAX_BED), NOZZLE_PARK_Z_FEEDRATE);
 
   // Load filament
   #if HAS_MMU2
@@ -136,7 +136,7 @@ inline void gcode_M702(void) {
 
   // Lift Z axis
   if (park_point.z > 0)
-    mechanics.do_blocking_move_to_z(MIN(mechanics.current_position[Z_AXIS] + park_point.z, Z_MAX_POS), NOZZLE_PARK_Z_FEEDRATE);
+    mechanics.do_blocking_move_to_z(MIN(mechanics.current_position[Z_AXIS] + park_point.z, Z_MAX_BED), NOZZLE_PARK_Z_FEEDRATE);
 
   // Unload filament
   #if HAS_MMU2

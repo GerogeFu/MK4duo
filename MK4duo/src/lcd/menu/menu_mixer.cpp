@@ -44,7 +44,7 @@
       mixer.gradient.start_z += float((int)lcdui.encoderPosition) * 0.1;
       lcdui.encoderPosition = 0;
       NOLESS(mixer.gradient.start_z, 0);
-      NOMORE(mixer.gradient.start_z, Z_MAX_POS);
+      NOMORE(mixer.gradient.start_z, Z_MAX_BED);
     }
     if (lcdui.should_draw()) {
       char tmp[21];
@@ -69,7 +69,7 @@
       mixer.gradient.end_z += float((int)lcdui.encoderPosition) * 0.1;
       lcdui.encoderPosition = 0;
       NOLESS(mixer.gradient.end_z, 0);
-      NOMORE(mixer.gradient.end_z, Z_MAX_POS);
+      NOMORE(mixer.gradient.end_z, Z_MAX_BED);
     }
 
     if (lcdui.should_draw()) {
