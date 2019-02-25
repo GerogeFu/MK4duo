@@ -142,7 +142,7 @@ void HAL_timer_start(const uint8_t timer_num, const uint32_t frequency) {
   NVIC_SetPriority(IRQn, TimerConfig[timer_num].priority);
 
   // wave mode, reset counter on match with RC,
-  TC_Configure(tc, channel, TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC | TC_CMR_TCCLKS_TIMER_CLOCK1 | TC_CMR_EEVT_XC0);
+  TC_Configure(tc, channel, TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC | TC_CMR_TCCLKS_TIMER_CLOCK1);
 
   // Set compare value
   TC_SetRC(tc, channel, VARIANT_MCK / 2 / frequency);
@@ -152,6 +152,7 @@ void HAL_timer_start(const uint8_t timer_num, const uint32_t frequency) {
 
   // enable interrupt on RC compare
   tc->TC_CHANNEL[channel].TC_IER = TC_IER_CPCS;
+  tc->TC_CHANNEL[channel].TC_IER = ~TC_IER_CPCS;
 
   // Finally, enable IRQ
   NVIC_EnableIRQ(IRQn);

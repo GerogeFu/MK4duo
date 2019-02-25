@@ -643,16 +643,16 @@ void Endstops::update_software_endstops(const AxisEnum axis) {
     soft_endstop_min[axis] = mechanics.data.base_min_pos[axis];
     soft_endstop_max[axis] = mechanics.data.base_max_pos[axis];
 
-  #endif
+    #if ENABLED(DEBUG_FEATURE)
+      if (printer.debugFeature()) {
+        SERIAL_MV("For ", axis_codes[axis]);
+        SERIAL_MV(" axis:\n data.home_offset = ", mechanics.data.home_offset[axis]);
+        SERIAL_MV("\n position_shift = ", mechanics.position_shift[axis]);
+        SERIAL_MV("\n soft_endstop_min = ", soft_endstop_min[axis]);
+        SERIAL_EMV("\n soft_endstop_max = ", soft_endstop_max[axis]);
+      }
+    #endif
 
-  #if ENABLED(DEBUG_FEATURE)
-    if (printer.debugFeature()) {
-      SERIAL_MV("For ", axis_codes[axis]);
-      SERIAL_MV(" axis:\n data.home_offset = ", mechanics.data.home_offset[axis]);
-      SERIAL_MV("\n position_shift = ", mechanics.position_shift[axis]);
-      SERIAL_MV("\n soft_endstop_min = ", soft_endstop_min[axis]);
-      SERIAL_EMV("\n soft_endstop_max = ", soft_endstop_max[axis]);
-    }
   #endif
 
 }
