@@ -921,6 +921,7 @@ void Cartesian_Mechanics::report_current_position_detail() {
     print_M204();
     print_M205();
     print_M206();
+    print_M228();
   }
 
   void Cartesian_Mechanics::print_M92() {
@@ -1032,6 +1033,17 @@ void Cartesian_Mechanics::report_current_position_detail() {
       SERIAL_MV(" Y", LINEAR_UNIT(data.home_offset[Y_AXIS]), 3);
       SERIAL_EMV(" Z", LINEAR_UNIT(data.home_offset[Z_AXIS]), 3);
     #endif
+  }
+
+  void Cartesian_Mechanics::print_M228() {
+    SERIAL_LM(CFG, "Set axis max travel:");
+    SERIAL_SMV(CFG, "  M228 X", LINEAR_UNIT(data.base_max_pos[X_AXIS]), 3);
+    SERIAL_MV(" Y", LINEAR_UNIT(data.base_max_pos[Y_AXIS]), 3);
+    SERIAL_EMV(" Z", LINEAR_UNIT(data.base_max_pos[Z_AXIS]), 3);
+    SERIAL_LM(CFG, "Set axis min travel:");
+    SERIAL_SMV(CFG, "  M228 S1 X", LINEAR_UNIT(data.base_min_pos[X_AXIS]), 3);
+    SERIAL_MV(" Y", LINEAR_UNIT(data.base_min_pos[Y_AXIS]), 3);
+    SERIAL_EMV(" Z", LINEAR_UNIT(data.base_min_pos[Z_AXIS]), 3);
   }
 
 #endif // DISABLED(DISABLE_M503)

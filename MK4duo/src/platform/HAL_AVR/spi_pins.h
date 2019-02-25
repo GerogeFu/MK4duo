@@ -21,6 +21,11 @@
  */
 #pragma once
 
+#undef SCK
+#undef MISO
+#undef MOSI
+#undef SS
+
 #if ENABLED(__AVR_ATmega1280__) || ENABLED(__AVR_ATmega2560__)
   #define MOSI_PIN            51
   #define MISO_PIN            50
@@ -52,3 +57,8 @@
   #define SCK_PIN             10
   #define SS_PIN              16
 #endif
+
+#define SCK   SCK_PIN
+#define MISO  MISO_PIN
+#define MOSI  MOSI_PIN
+#define SS    SS_PIN

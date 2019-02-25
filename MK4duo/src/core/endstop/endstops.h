@@ -137,10 +137,7 @@ class Endstops {
 
     // Constrain the given coordinates to the software endstops.
     static void clamp_to_software(float target[XYZ]);
-
-    #if ENABLED(WORKSPACE_OFFSETS) || ENABLED(DUAL_X_CARRIAGE)
-      static void update_software_endstops(const AxisEnum axis);
-    #endif
+    static void update_software_endstops(const AxisEnum axis);
 
     #if ENABLED(PINS_DEBUGGING)
       static void run_monitor();

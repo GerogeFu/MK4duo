@@ -4151,6 +4151,11 @@ enum ClockSource2 : char {
 
 #endif
 
+#undef SCK
+#undef MISO
+#undef MOSI
+#undef SS
+
 #ifndef DIO0_PIN
   #error "pins for this chip not defined in arduino.h! If you write an appropriate pin definition and have this firmware work on your chip, please submit a pull request"
 #endif

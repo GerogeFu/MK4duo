@@ -58,6 +58,7 @@
 #include "config/m221.h"                  // Set extrusion percentage
 #include "config/m222.h"                  // Set density
 #include "config/m223_m224.h"             // Set Logic or Pullup filrunout
+#include "config/m228.h"                  // Set Set axis min/max travel
 #include "config/m301.h"                  // Set PID parameters Heater
 #include "config/m302.h"                  // Allow cold extrudes
 #include "config/m305.h"                  // Set thermistor and ADC parameters

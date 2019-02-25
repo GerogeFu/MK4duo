@@ -165,6 +165,7 @@ class Cartesian_Mechanics : public Mechanics {
       static void print_M204();
       static void print_M205();
       static void print_M206();
+      static void print_M228();
     #endif
 
     #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
