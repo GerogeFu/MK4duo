@@ -55,7 +55,7 @@
       bedlevel.set_bed_leveling_enabled(false);
     #endif
 
-    printer.setup_for_endstop_or_probe_move();
+    mechanics.setup_for_endstop_or_probe_move();
 
     const ProbePtRaiseEnum raise_after = parser.boolval('E', true) ? PROBE_PT_STOW : PROBE_PT_NONE;
     const float measured_z = probe.check_pt(xpos, ypos, raise_after, 1);
@@ -80,7 +80,7 @@
 
     SERIAL_EOL();
 
-    printer.clean_up_after_endstop_or_probe_move();
+    mechanics.clean_up_after_endstop_or_probe_move();
 
     #if Z_PROBE_AFTER_PROBING > 0
       if (raise_after == PROBE_PT_STOW) probe.move_z_after_probing();

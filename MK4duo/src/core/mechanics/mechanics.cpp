@@ -62,6 +62,10 @@ uint32_t Mechanics::max_acceleration_steps_per_s2[XYZE_N] = { 0 };
   volatile int16_t Mechanics::babystepsTodo[XYZ] = { 0 };
 #endif
 
+/** Private Parameters */
+float   Mechanics::saved_feedrate_mm_s = 0.0;
+int16_t Mechanics::saved_feedrate_percentage = 0;
+
 /**
  * Get homedir for axis
  */
@@ -106,12 +110,11 @@ void Mechanics::set_current_from_steppers_for_axis(const AxisEnum axis) {
 }
 
 /**
- * line_to_current_position
  * Move the planner to the current position from wherever it last moved
  * (or from wherever it has been told it is located).
  */
-void Mechanics::line_to_current_position() {
-  planner.buffer_line(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS], feedrate_mm_s, tools.active_extruder);
+void Mechanics::line_to_current_position(const float &fr_mm_s/*=feedrate_mm_s*/) {
+  planner.buffer_line(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS], fr_mm_s, tools.active_extruder);
 }
 
 /**
@@ -119,7 +122,7 @@ void Mechanics::line_to_current_position() {
  * Move the planner to the position stored in the destination array, which is
  * used by G0/G1/G2/G3/G5 and many other functions to set a destination.
  */
-void Mechanics::line_to_destination(float fr_mm_s) {
+void Mechanics::line_to_destination(const float fr_mm_s) {
   planner.buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], fr_mm_s, tools.active_extruder);
 }
 
@@ -147,6 +150,17 @@ void Mechanics::prepare_move_to_destination() {
   }
 
   set_current_to_destination();
+}
+
+void Mechanics::setup_for_endstop_or_probe_move() {
+  saved_feedrate_mm_s = mechanics.feedrate_mm_s;
+  saved_feedrate_percentage = feedrate_percentage;
+  feedrate_percentage = 100;
+}
+
+void Mechanics::clean_up_after_endstop_or_probe_move() {
+  feedrate_mm_s = saved_feedrate_mm_s;
+  feedrate_percentage = saved_feedrate_percentage;
 }
 
 #if ENABLED(G5_BEZIER)

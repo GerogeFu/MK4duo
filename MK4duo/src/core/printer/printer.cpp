@@ -415,33 +415,6 @@ void Printer::safe_delay(millis_t ms) {
   check_periodical_actions();
 }
 
-/**
- * Prepare to do endstop or probe moves
- * with custom feedrates.
- *
- *  - Save current feedrates
- *  - Reset the rate multiplier
- */
-void Printer::bracket_probe_move(const bool before) {
-  static float saved_feedrate_mm_s;
-  static int16_t saved_feedrate_percentage;
-  #if ENABLED(DEBUG_FEATURE)
-    if (printer.debugFeature()) DEBUG_POS("bracket_probe_move", mechanics.current_position);
-  #endif
-  if (before) {
-    saved_feedrate_mm_s = mechanics.feedrate_mm_s;
-    saved_feedrate_percentage = mechanics.feedrate_percentage;
-    mechanics.feedrate_percentage = 100;
-  }
-  else {
-    mechanics.feedrate_mm_s = saved_feedrate_mm_s;
-    mechanics.feedrate_percentage = saved_feedrate_percentage;
-  }
-}
-
-void Printer::setup_for_endstop_or_probe_move()       { bracket_probe_move(true); }
-void Printer::clean_up_after_endstop_or_probe_move()  { bracket_probe_move(false); }
-
 void Printer::quickstop_stepper() {
   planner.quick_stop();
   planner.synchronize();

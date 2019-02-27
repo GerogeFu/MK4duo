@@ -97,7 +97,7 @@
     // Get X Y Z E F
     commands.get_destination();
 
-    printer.setup_for_endstop_or_probe_move();
+    mechanics.setup_for_endstop_or_probe_move();
 
     // If any axis has enough movement, do the move
     LOOP_XYZ(i)
@@ -110,7 +110,7 @@
         break;
       }
 
-    printer.clean_up_after_endstop_or_probe_move();
+    mechanics.clean_up_after_endstop_or_probe_move();
   }
 
   inline void gcode_G38(void) {

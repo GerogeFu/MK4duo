@@ -91,7 +91,7 @@ void Core_Mechanics::factory_parameters() {
   #endif
 
   #if ENABLED(WORKSPACE_OFFSETS)
-    ZERO(mechanics.data.home_offset);
+    ZERO(data.home_offset);
   #endif
 
 }
@@ -116,34 +116,30 @@ void Core_Mechanics::get_cartesian_from_steppers() {
  */
 void Core_Mechanics::do_blocking_move_to(const float rx, const float ry, const float rz, const float &fr_mm_s /*=0.0*/) {
 
-  REMEMBER(feedrate_mm_s);
-
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) Com::print_xyz(PSTR(">>> do_blocking_move_to"), NULL, rx, ry, rz);
   #endif
 
-  const float z_feedrate = fr_mm_s ? fr_mm_s : homing_feedrate_mm_s[Z_AXIS];
+  const float z_feedrate  = fr_mm_s ? fr_mm_s : homing_feedrate_mm_s[Z_AXIS],
+              xy_feedrate = fr_mm_s ? fr_mm_s : XY_PROBE_FEEDRATE_MM_S;
 
   // If Z needs to raise, do it before moving XY
   if (current_position[Z_AXIS] < rz) {
-    feedrate_mm_s = z_feedrate;
     current_position[Z_AXIS] = rz;
-    line_to_current_position();
+    line_to_current_position(z_feedrate);
   }
 
   feedrate_mm_s = fr_mm_s ? fr_mm_s : XY_PROBE_FEEDRATE_MM_S;
   current_position[X_AXIS] = rx;
   current_position[Y_AXIS] = ry;
-  line_to_current_position();
+  line_to_current_position(xy_feedrate);
 
   // If Z needs to lower, do it after moving XY
   if (current_position[Z_AXIS] > rz) {
     feedrate_mm_s = z_feedrate;
     current_position[Z_AXIS] = rz;
-    line_to_current_position();
+    line_to_current_position(z_feedrate);
   }
-
-  RESTORE(feedrate_mm_s);
 
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) SERIAL_EM("<<< do_blocking_move_to");
@@ -170,7 +166,7 @@ void Core_Mechanics::home(const bool homeX/*=false*/, const bool homeY/*=false*/
   if (printer.debugSimulation()) {
     LOOP_XYZ(axis) set_axis_is_at_home((AxisEnum)axis);
     #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
-      mechanics.Nextion_gfx_clear();
+      Nextion_gfx_clear();
     #endif
     return;
   }
@@ -203,14 +199,11 @@ void Core_Mechanics::home(const bool homeX/*=false*/, const bool homeY/*=false*/
     tools.change(0, 0, true);
   #endif
 
-  printer.setup_for_endstop_or_probe_move();
-  #if ENABLED(DEBUG_FEATURE)
-    if (printer.debugFeature()) SERIAL_EM("> endstops.setEnabled(true)");
-  #endif
+  setup_for_endstop_or_probe_move();
   endstops.setEnabled(true); // Enable endstops for next homing move
 
   bool come_back = parser.boolval('B');
-  REMEMBER(feedrate_mm_s);
+  REMEMBER(fr, feedrate_mm_s);
   COPY_ARRAY(stored_position[1], current_position);
 
   const bool home_all = (!homeX && !homeY && !homeZ) || (homeX && homeY && homeZ);
@@ -278,18 +271,18 @@ void Core_Mechanics::home(const bool homeX/*=false*/, const bool homeY/*=false*/
     feedrate_mm_s = homing_feedrate_mm_s[X_AXIS];
     COPY_ARRAY(destination, stored_position[1]);
     prepare_move_to_destination();
-    RESTORE(feedrate_mm_s);
+    RESTORE(fr);
   }
 
   #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
-    mechanics.Nextion_gfx_clear();
+    Nextion_gfx_clear();
   #endif
 
   #if HAS_LEVELING
     bedlevel.set_bed_leveling_enabled(leveling_was_active);
   #endif
 
-  printer.clean_up_after_endstop_or_probe_move();
+  clean_up_after_endstop_or_probe_move();
 
   planner.synchronize();
 
@@ -300,7 +293,7 @@ void Core_Mechanics::home(const bool homeX/*=false*/, const bool homeY/*=false*/
 
   lcdui.refresh();
 
-  mechanics.report_current_position();
+  report_current_position();
 
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) SERIAL_EM("<<< G28");
@@ -1134,7 +1127,7 @@ void Core_Mechanics::homeaxis(const AxisEnum axis) {
       destination[Y_AXIS] -= probe.data.offset[Y_AXIS];
     #endif
 
-    if (mechanics.position_is_reachable(destination[X_AXIS], destination[Y_AXIS])) {
+    if (position_is_reachable(destination[X_AXIS], destination[Y_AXIS])) {
 
       #if ENABLED(DEBUG_FEATURE)
         if (printer.debugFeature()) DEBUG_POS("Z_SAFE_HOMING", destination);
@@ -1188,7 +1181,7 @@ void Core_Mechanics::homeaxis(const AxisEnum axis) {
       destination[Y_AXIS] -= probe.data.offset[Y_AXIS];
     #endif
 
-    if (mechanics.position_is_reachable(destination[X_AXIS], destination[Y_AXIS])) {
+    if (position_is_reachable(destination[X_AXIS], destination[Y_AXIS])) {
 
       #if ENABLED(DEBUG_FEATURE)
         if (printer.debugFeature()) DEBUG_POS("DOUBLE_Z_HOMING", destination);

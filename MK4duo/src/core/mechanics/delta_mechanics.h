@@ -207,7 +207,7 @@ class Delta_Mechanics : public Mechanics {
     /**
      * Calculate delta, start a line, and set current_position to destination
      */
-    static void prepare_uninterpolated_move_to_destination(const float fr_mm_s=0.0);
+    static void prepare_uninterpolated_move_to_destination(const float &fr_mm_s=0.0);
 
     /**
      * Calculate the highest Z position where the

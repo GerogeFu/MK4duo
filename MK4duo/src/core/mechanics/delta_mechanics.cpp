@@ -242,17 +242,16 @@ void Delta_Mechanics::get_cartesian_from_steppers() {
  */
 void Delta_Mechanics::do_blocking_move_to(const float rx, const float ry, const float rz, const float &fr_mm_s /*=0.0*/) {
 
-  REMEMBER(feedrate_mm_s);
-
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) Com::print_xyz(PSTR(">>> do_blocking_move_to"), NULL, rx, ry, rz);
   #endif
 
-  const float z_feedrate = fr_mm_s ? fr_mm_s : homing_feedrate_mm_s[Z_AXIS];
+  const float z_feedrate  = fr_mm_s ? fr_mm_s : homing_feedrate_mm_s[Z_AXIS],
+              xy_feedrate = fr_mm_s ? fr_mm_s : XY_PROBE_FEEDRATE_MM_S;
 
   if (!position_is_reachable(rx, ry)) return;
 
-  feedrate_mm_s = fr_mm_s ? fr_mm_s : XY_PROBE_FEEDRATE_MM_S;
+  REMEMBER(fr, feedrate_mm_s, xy_feedrate);
 
   set_destination_to_current();          // sync destination at the start
 
@@ -302,7 +301,7 @@ void Delta_Mechanics::do_blocking_move_to(const float rx, const float ry, const 
     #endif
   }
 
-  RESTORE(feedrate_mm_s);
+  RESTORE(fr);
 
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) SERIAL_EM("<<< do_blocking_move_to");
@@ -482,14 +481,11 @@ void Delta_Mechanics::home(const bool report_position/*=true*/) {
     tools.change(0, 0, true);
   #endif
 
-  printer.setup_for_endstop_or_probe_move();
-  #if ENABLED(DEBUG_FEATURE)
-    if (printer.debugFeature()) SERIAL_EM("> endstops.setEnabled(true)");
-  #endif
+  setup_for_endstop_or_probe_move();
   endstops.setEnabled(true); // Enable endstops for next homing move
 
   bool come_back = parser.boolval('B');
-  REMEMBER(feedrate_mm_s);
+  REMEMBER(fr, feedrate_mm_s);
   COPY_ARRAY(stored_position[1], current_position);
 
   #if ENABLED(DEBUG_FEATURE)
@@ -552,7 +548,7 @@ void Delta_Mechanics::home(const bool report_position/*=true*/) {
     feedrate_mm_s = homing_feedrate_mm_s[X_AXIS];
     COPY_ARRAY(destination, stored_position[1]);
     prepare_move_to_destination();
-    RESTORE(feedrate_mm_s);
+    RESTORE(fr);
   }
 
   #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
@@ -563,7 +559,7 @@ void Delta_Mechanics::home(const bool report_position/*=true*/) {
     bedlevel.set_bed_leveling_enabled(leveling_was_active);
   #endif
 
-  printer.clean_up_after_endstop_or_probe_move();
+  clean_up_after_endstop_or_probe_move();
 
   planner.synchronize();
 
@@ -1290,7 +1286,7 @@ void Delta_Mechanics::homeaxis(const AxisEnum axis) {
     #if ENABLED(DEBUG_FEATURE)
       if (printer.debugFeature()) SERIAL_EM("endstop_adj:");
     #endif
-    do_homing_move(axis, data.endstop_adj[axis] - (MIN_STEPS_PER_SEGMENT + 1) * mechanics.steps_to_mm[axis]);
+    do_homing_move(axis, data.endstop_adj[axis] - (MIN_STEPS_PER_SEGMENT + 1) * steps_to_mm[axis]);
   }
 
   // Clear z_lift if homing the Z axis
@@ -1309,7 +1305,7 @@ void Delta_Mechanics::homeaxis(const AxisEnum axis) {
 /**
  * Calculate delta, start a line, and set current_position to destination
  */
-void Delta_Mechanics::prepare_uninterpolated_move_to_destination(const float fr_mm_s/*=0.0*/) {
+void Delta_Mechanics::prepare_uninterpolated_move_to_destination(const float &fr_mm_s/*=0.0*/) {
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) DEBUG_POS("prepare_uninterpolated_move_to_destination", destination);
   #endif

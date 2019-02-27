@@ -64,7 +64,7 @@ static void ac_setup(const bool reset_bed) {
   #endif
 
   planner.synchronize();
-  printer.setup_for_endstop_or_probe_move();
+  mechanics.setup_for_endstop_or_probe_move();
 
   #if HAS_LEVELING
     if (reset_bed) bedlevel.reset(); // After full calibration bed-level data is no longer valid
@@ -78,7 +78,7 @@ static void ac_cleanup() {
   #endif
 
   STOW_PROBE();
-  printer.clean_up_after_endstop_or_probe_move();
+  mechanics.clean_up_after_endstop_or_probe_move();
 
   #if HOTENDS > 1
     tools.change(old_tool_index, 0, true);

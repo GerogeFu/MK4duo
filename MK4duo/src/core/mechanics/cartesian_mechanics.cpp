@@ -103,7 +103,7 @@ void Cartesian_Mechanics::factory_parameters() {
   #endif
 
   #if ENABLED(WORKSPACE_OFFSETS)
-    ZERO(mechanics.data.home_offset);
+    ZERO(data.home_offset);
   #endif
 
 }
@@ -128,34 +128,28 @@ void Cartesian_Mechanics::get_cartesian_from_steppers() {
  */
 void Cartesian_Mechanics::do_blocking_move_to(const float rx, const float ry, const float rz, const float &fr_mm_s /*=0.0*/) {
 
-  REMEMBER(feedrate_mm_s);
-
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) Com::print_xyz(PSTR(">>> do_blocking_move_to"), NULL, rx, ry, rz);
   #endif
 
-  const float z_feedrate = fr_mm_s ? fr_mm_s : homing_feedrate_mm_s[Z_AXIS];
+  const float z_feedrate  = fr_mm_s ? fr_mm_s : homing_feedrate_mm_s[Z_AXIS],
+              xy_feedrate = fr_mm_s ? fr_mm_s : XY_PROBE_FEEDRATE_MM_S;
 
   // If Z needs to raise, do it before moving XY
   if (current_position[Z_AXIS] < rz) {
-    feedrate_mm_s = z_feedrate;
     current_position[Z_AXIS] = rz;
-    line_to_current_position();
+    line_to_current_position(z_feedrate);
   }
 
-  feedrate_mm_s = fr_mm_s ? fr_mm_s : XY_PROBE_FEEDRATE_MM_S;
   current_position[X_AXIS] = rx;
   current_position[Y_AXIS] = ry;
-  line_to_current_position();
+  line_to_current_position(xy_feedrate);
 
   // If Z needs to lower, do it after moving XY
   if (current_position[Z_AXIS] > rz) {
-    feedrate_mm_s = z_feedrate;
     current_position[Z_AXIS] = rz;
-    line_to_current_position();
+    line_to_current_position(z_feedrate);
   }
-
-  RESTORE(feedrate_mm_s);
 
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) SERIAL_EM("<<< do_blocking_move_to");
@@ -182,7 +176,7 @@ void Cartesian_Mechanics::home(const bool homeX/*=false*/, const bool homeY/*=fa
   if (printer.debugSimulation()) {
     LOOP_XYZ(axis) set_axis_is_at_home((AxisEnum)axis);
     #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
-      mechanics.Nextion_gfx_clear();
+      Nextion_gfx_clear();
     #endif
     return;
   }
@@ -224,14 +218,11 @@ void Cartesian_Mechanics::home(const bool homeX/*=false*/, const bool homeY/*=fa
     extruder_duplication_enabled = false;
   #endif
 
-  printer.setup_for_endstop_or_probe_move();
-  #if ENABLED(DEBUG_FEATURE)
-    if (printer.debugFeature()) SERIAL_EM("> endstops.setEnabled(true)");
-  #endif
+  setup_for_endstop_or_probe_move();
   endstops.setEnabled(true); // Enable endstops for next homing move
 
   bool come_back = parser.boolval('B');
-  REMEMBER(feedrate_mm_s);
+  REMEMBER(fr, feedrate_mm_s);
   COPY_ARRAY(stored_position[1], current_position);
 
   const bool home_all = (!homeX && !homeY && !homeZ) || (homeX && homeY && homeZ);
@@ -346,18 +337,18 @@ void Cartesian_Mechanics::home(const bool homeX/*=false*/, const bool homeY/*=fa
     feedrate_mm_s = homing_feedrate_mm_s[X_AXIS];
     COPY_ARRAY(destination, stored_position[1]);
     prepare_move_to_destination();
-    RESTORE(feedrate_mm_s);
+    RESTORE(fr);
   }
 
   #if HAS_NEXTION_LCD && ENABLED(NEXTION_GFX)
-    mechanics.Nextion_gfx_clear();
+    Nextion_gfx_clear();
   #endif
 
   #if HAS_LEVELING
     bedlevel.set_bed_leveling_enabled(leveling_was_active);
   #endif
 
-  printer.clean_up_after_endstop_or_probe_move();
+  clean_up_after_endstop_or_probe_move();
 
   planner.synchronize();
 
@@ -368,7 +359,7 @@ void Cartesian_Mechanics::home(const bool homeX/*=false*/, const bool homeY/*=fa
 
   lcdui.refresh();
 
-  mechanics.report_current_position();
+  report_current_position();
 
   #if ENABLED(DEBUG_FEATURE)
     if (printer.debugFeature()) SERIAL_EM("<<< G28");
@@ -400,7 +391,7 @@ void Cartesian_Mechanics::do_homing_move(const AxisEnum axis, const float distan
   // Only do some things when moving towards an endstop
   const int8_t axis_home_dir =
     #if ENABLED(DUAL_X_CARRIAGE)
-      (axis == X_AXIS) ? mechanics.x_home_dir(tools.active_extruder) :
+      (axis == X_AXIS) ? x_home_dir(tools.active_extruder) :
     #endif
     get_homedir(axis);
   const bool is_home_dir = (axis_home_dir > 0) == (distance > 0);

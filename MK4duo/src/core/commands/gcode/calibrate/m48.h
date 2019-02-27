@@ -116,7 +116,7 @@
       bedlevel.set_bed_leveling_enabled(false);
     #endif
 
-    printer.setup_for_endstop_or_probe_move();
+    mechanics.setup_for_endstop_or_probe_move();
 
     float mean = 0.0, sigma = 0.0, min = 99999.9, max = -99999.9, sample_set[n_samples];
 
@@ -259,7 +259,7 @@
       SERIAL_EOL();
     }
 
-    printer.clean_up_after_endstop_or_probe_move();
+    mechanics.clean_up_after_endstop_or_probe_move();
 
     // Re-enable bed level correction if it had been on
     #if HAS_LEVELING

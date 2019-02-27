@@ -132,9 +132,6 @@ class Printer {
     static void check_periodical_actions();
     static void safe_delay(millis_t ms);
 
-    static void setup_for_endstop_or_probe_move();
-    static void clean_up_after_endstop_or_probe_move();
-
     static void quickstop_stepper();
 
     static void kill(PGM_P const lcd_msg=NULL);
@@ -246,8 +243,6 @@ class Printer {
     static void handle_interrupt_events();
 
     static void handle_safety_watch();
-
-    static void bracket_probe_move(const bool before);
 
     #if ENABLED(TEMP_STAT_LEDS)
       static void handle_status_leds();
