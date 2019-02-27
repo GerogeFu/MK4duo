@@ -566,12 +566,12 @@
 // SD support
 #define HAS_SD_SUPPORT      (ENABLED(SDSUPPORT) || ENABLED(USB_FLASH_DRIVE_SUPPORT))
 #if HAS_SD_SUPPORT
-  #define SD_MAX_FOLDER_DEPTH 5     // Maximum folder depth
-  // Number of VFAT entries used. Each entry has 13 UTF-16 characters
-  #if ENABLED(SCROLL_LONG_FILENAMES)
-    #define MAX_VFAT_ENTRIES (5)
-  #else
+  #if ENABLED(__AVR__)
     #define MAX_VFAT_ENTRIES (2)
+    #define SD_MAX_FOLDER_DEPTH 2   // Maximum folder depth
+  #else
+    #define MAX_VFAT_ENTRIES (3)
+    #define SD_MAX_FOLDER_DEPTH 5   // Maximum folder depth
   #endif
   #define FILENAME_LENGTH 13
   /** Total size of the buffer used to store the long filenames */
@@ -591,9 +591,9 @@
   #undef SDSORT_USES_STACK
   #undef SDSORT_CACHE_NAMES
   #undef SDSORT_DYNAMIC_RAM
-  //#define SDCARD_SORT_ALPHA
+  #define SDCARD_SORT_ALPHA
   #define SDSORT_LIMIT 256
-  #define SDSORT_GCODE false
+  #define SDSORT_GCODE true
   #define SDSORT_USES_RAM false
   #define SDSORT_USES_STACK false
   #define SDSORT_CACHE_NAMES false

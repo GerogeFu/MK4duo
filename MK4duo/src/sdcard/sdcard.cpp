@@ -870,7 +870,12 @@
         continue; // MAC CRAP
       }
 
-      setFilenameIsDir(file.isDir());
+      if (!(file.isFile() || file.isSubDir()) || file.isHidden()) {
+        file.close();
+        continue;
+      }
+
+      setFilenameIsDir(file.isSubDir());
 
       switch (lsAction) {
         case LS_Count:
@@ -903,7 +908,7 @@
   // Source: https://github.com/dcnewman/RepRapFirmware              //
   // Copy date: 27 FEB 2016                                          //
   // --------------------------------------------------------------- //
-  void SDCard::parsejson(SdBaseFile &parser_file) {
+  void SDCard::parsejson(SdFile &parser_file) {
     fileSize = parser_file.fileSize();
     filamentNeeded    = 0.0;
     objectHeight      = 0.0;
@@ -914,7 +919,7 @@
 
     bool genByFound = false, firstlayerHeightFound = false, layerHeightFound = false, filamentNeedFound = false;
 
-    #if CPU_ARCH==ARCH_AVR
+    #if ENABLED(__AVR__)
       #define GCI_BUF_SIZE 120
     #else
       #define GCI_BUF_SIZE 1024

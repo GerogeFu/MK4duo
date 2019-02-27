@@ -269,7 +269,7 @@
     private: /** Private Function */
 
       static void lsDive(SdFile parent, PGM_P const match = NULL);
-      static void parsejson(SdBaseFile &parser_file);
+      static void parsejson(SdFile &parser_file);
       static bool findGeneratedBy(char* buf, char* genBy);
       static bool findFirstLayerHeight(char* buf, float &firstlayerHeight);
       static bool findLayerHeight(char* buf, float &layerHeight);
