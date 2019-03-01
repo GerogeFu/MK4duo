@@ -94,7 +94,8 @@ void Heater::waitForTarget(bool no_wait_for_cooling/*=true*/) {
   #endif
 
   float     old_temp            = 9999.0;
-  bool      wants_to_cool       = false;
+  bool      wants_to_cool       = false,
+            first_loop          = true;
   millis_t  now,
             next_cool_check_ms  = 0;
 
@@ -132,7 +133,10 @@ void Heater::waitForTarget(bool no_wait_for_cooling/*=true*/) {
 
       if (!residency_start_ms) {
         // Start the TEMP_RESIDENCY_TIME timer when we reach target temp for the first time.
-        if (temp_diff < TEMP_WINDOW) residency_start_ms = now;
+        if (temp_diff < TEMP_WINDOW) {
+          residency_start_ms = now;
+          if (first_loop) residency_start_ms += (TEMP_RESIDENCY_TIME) * 1000UL;
+        }
       }
       else if (temp_diff > TEMP_HYSTERESIS) {
         // Restart the timer whenever the temperature falls outside the hysteresis.
@@ -151,6 +155,8 @@ void Heater::waitForTarget(bool no_wait_for_cooling/*=true*/) {
         old_temp = temp;
       }
     }
+
+    first_loop = false;
 
   } while (printer.isWaitForHeatUp() && TEMP_CONDITIONS);
 
