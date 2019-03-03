@@ -30,38 +30,18 @@ MemoryStore memorystore;
 
 extern void eeprom_flush(void);
 
+/** Public Parameters */
 #if HAS_EEPROM_SD
   char MemoryStore::eeprom_data[EEPROM_SIZE];
 #endif
 
-bool MemoryStore::access_read() {
-  #if HAS_EEPROM_SD
-    card.open_eeprom_sd(true);
-    size_t bytes_read = card.read_eeprom_data(eeprom_data, EEPROM_SIZE);
-    if (bytes_read != EEPROM_SIZE) SERIAL_STR(ER);
-    else SERIAL_STR(ECHO);
-    SERIAL_EMV("SD EEPROM bytes read: ", (int)bytes_read);
-    card.close_eeprom_sd();
-    return (bytes_read != EEPROM_SIZE);
-  #else
-    return false;
-  #endif
-
-}
-
+/** Public Function */
 bool MemoryStore::access_write() {
   #if HAS_EEPROM_FLASH
     eeprom_flush();
     return false;
   #elif HAS_EEPROM_SD
-    card.open_eeprom_sd(false);
-    size_t bytes_written = card.write_eeprom_data(eeprom_data, EEPROM_SIZE);
-    const bool error_read = bytes_written != EEPROM_SIZE;
-    if (error_read) SERIAL_STR(ER);
-    else SERIAL_STR(ECHO);
-    SERIAL_EMV("SD EEPROM bytes written: ", (int)bytes_written);
-    card.close_eeprom_sd();
-    return error_read;
+    card.write_eeprom();
   #else
     return false;
   #endif

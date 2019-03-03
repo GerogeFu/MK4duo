@@ -148,7 +148,6 @@ void PrintCounter::loadStats() {
 
     // Check if the EEPROM block is initialized
     char value[3];
-    memorystore.access_read();
 
     memorystore.read_data(address, (uint8_t*)&value, sizeof(value));
 

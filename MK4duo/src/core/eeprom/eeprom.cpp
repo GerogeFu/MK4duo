@@ -796,9 +796,6 @@ void EEPROM::post_process() {
 
     int eeprom_index = EEPROM_OFFSET;
 
-    if (eeprom_error = memorystore.access_read())
-      return false;
-
     EEPROM_READ_ALWAYS(stored_ver);
     EEPROM_READ_ALWAYS(stored_crc);
 

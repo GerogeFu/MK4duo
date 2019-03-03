@@ -135,12 +135,13 @@
   /** Public Function */
 
   void SDCard::mount() {
-    setDetect(false);
+    if (isDetected()) return;
+
     if (root.isOpen()) root.close();
 
-    if (!fat.begin(SDSS, SD_SCK_MHZ(4))
+    if (!fat.begin(SDSS, SPI_SPEED)
       #if ENABLED(LCD_SDSS) && (LCD_SDSS != SDSS)
-        && !fat.begin(LCD_SDSS, SD_SCK_MHZ(4))
+        && !fat.begin(LCD_SDSS, SPI_SPEED)
       #endif
     ) {
       SERIAL_LM(ER, MSG_SD_INIT_FAIL);
@@ -167,9 +168,15 @@
     }
     else {
       setDetect(true);
-      SERIAL_EM(MSG_SD_CARD_OK);
+      SERIAL_LM(ECHO, MSG_SD_CARD_OK);
     }
     fat.chdir();
+
+    #if HAS_EEPROM_SD
+      import_eeprom();
+    #endif
+
+    if (selectFile("init.g", true)) startFileprint();
 
     lcdui.refresh();
   }
@@ -374,7 +381,7 @@
     SdFile newDir;
     SdFile *parent = workDir.isOpen() ? &workDir : &root;
 
-    if (!newDir.open(parent, relpath, FILE_READ)) {
+    if (!newDir.open(parent, relpath, O_READ)) {
       SERIAL_LMT(ECHO, MSG_SD_CANT_ENTER_SUBDIR, relpath);
     }
     else {
@@ -445,13 +452,13 @@
     }
   }
 
-  bool SDCard::selectFile(PGM_P filename) {
+  bool SDCard::selectFile(PGM_P filename, const bool silent/*=false*/) {
     PGM_P fname = filename;
 
     if (!isDetected()) return false;
 
     gcode_file.close();
-    if (gcode_file.open(&workDir, filename, FILE_READ)) {
+    if (gcode_file.open(&workDir, filename, O_READ)) {
       if ((fname = strrchr(filename, '/')) != NULL)
         fname++;
       else
@@ -460,8 +467,10 @@
       fileSize = gcode_file.fileSize();
       sdpos = 0;
 
-      SERIAL_MT(MSG_SD_FILE_OPENED, fname);
-      SERIAL_EMV(MSG_SD_SIZE, fileSize);
+      if (!silent) {
+        SERIAL_MT(MSG_SD_FILE_OPENED, fname);
+        SERIAL_EMV(MSG_SD_SIZE, fileSize);
+      }
 
       for (uint16_t c = 0; c < sizeof(fileName); c++)
         const_cast<char&>(fileName[c]) = '\0';
@@ -474,7 +483,7 @@
       return true;
     }
     else {
-      SERIAL_LMT(ER, MSG_SD_OPEN_FILE_FAIL, fname);
+      if (!silent) SERIAL_LMT(ER, MSG_SD_OPEN_FILE_FAIL, fname);
       return false;
     }
   }
@@ -514,7 +523,7 @@
 
       if (!isDetected() || restart.file.isOpen()) return;
 
-      if (!restart.file.open(&root, restart_file_name, read ? FILE_READ : (O_CREAT | O_WRITE | O_TRUNC | O_SYNC)))
+      if (!restart.file.open(fat.vwd(), restart_file_name, read ? O_READ : (O_RDWR | O_CREAT | O_SYNC)))
         SERIAL_LMT(ER, MSG_SD_OPEN_FILE_FAIL, restart_file_name);
       else if (!read)
         SERIAL_EMT(MSG_SD_WRITE_TO_FILE, restart_file_name);
@@ -532,7 +541,7 @@
     }
 
     bool SDCard::exist_restart_file() {
-      const bool exist = restart.file.open(&root, restart_file_name, FILE_READ);
+      const bool exist = restart.file.open(fat.vwd(), restart_file_name, O_READ);
       #if ENABLED(DEBUG_RESTART)
         SERIAL_MSG("File restart ");
         if (!exist) SERIAL_MSG("not ");
@@ -546,21 +555,29 @@
 
   #if HAS_EEPROM_SD
 
-    void SDCard::open_eeprom_sd(const bool read) {
-
+    void SDCard::import_eeprom() {
       if (!isDetected()) mount();
-
       if (!isDetected()) SERIAL_LM(ER, MSG_NO_CARD);
-
-      if (eeprom_file.isOpen()) eeprom_file.close();
-
-      if (!eeprom_file.open(&root, "eeprom", read ? FILE_READ : FILE_WRITE)) {
-        SERIAL_SM(ER, MSG_SD_OPEN_FILE_FAIL);
-        SERIAL_EM("eeprom");
+      if (!eeprom_file.open("eeprom", O_RDWR | O_CREAT | O_SYNC) ||
+        eeprom_file.read(memorystore.eeprom_data, EEPROM_SIZE) != EEPROM_SIZE) {
+        SERIAL_LM(ER, MSG_SD_OPEN_FILE_FAIL "eeprom");
+      }
+      else {
+        SERIAL_LM(ECHO, "EEPROM read from sd card.");
       }
     }
 
-    void SDCard::close_eeprom_sd() { eeprom_file.close(); }
+    void SDCard::write_eeprom() {
+      bool failed = false;
+      if (!isDetected()) {
+        SERIAL_LM(ER, MSG_NO_CARD);
+        return;
+      }
+      if (!eeprom_file.seekSet(0)) failed = true;
+      if (!failed && !eeprom_file.write(memorystore.eeprom_data, EEPROM_SIZE) == EEPROM_SIZE)
+        failed = true;
+      if (failed) SERIAL_LM(ER, "Could not write eeprom to sd card");
+    }
 
   #endif
 
@@ -780,7 +797,7 @@
 
       card.unmount();
 
-      if (!sd.begin(SDSS, SD_SCK_MHZ(4))) {
+      if (!sd.begin(SDSS, SPI_SPEED)) {
         SERIAL_LM(ER, "SD initialization failure!");
         return;
       }

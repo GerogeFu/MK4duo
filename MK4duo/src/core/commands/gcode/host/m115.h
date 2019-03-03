@@ -85,7 +85,7 @@ inline void gcode_M115(void) {
     SERIAL_CAP("Z_PROBE:0");
   #endif
 
-  // MESH_REPORT (M320 V, M420 V)
+  // MESH_REPORT (M420 V)
   #if HAS_LEVELING
     SERIAL_CAP("LEVELING_DATA:1");
   #else

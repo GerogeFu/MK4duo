@@ -192,7 +192,7 @@
 
       static void printEscapeChars(PGM_P s);
 
-      static bool selectFile(PGM_P filename);
+      static bool selectFile(PGM_P filename, const bool silent=false);
 
       static int8_t updir();
       static uint16_t getnrfilenames();
@@ -205,10 +205,8 @@
       #endif
 
       #if HAS_EEPROM_SD
-        static void open_eeprom_sd(const bool read);
-        static void close_eeprom_sd();
-        static inline size_t write_eeprom_data(void* buf, uint16_t nbyte)  { return eeprom_file.isOpen() ? eeprom_file.write(buf, nbyte) : -1; }
-        static inline size_t read_eeprom_data(void* buf, uint16_t nbyte)   { return eeprom_file.isOpen() ? eeprom_file.read(buf, nbyte) : -1; }
+        static void import_eeprom();
+        static void write_eeprom();
       #endif
 
       #if ENABLED(SDCARD_SORT_ALPHA)
